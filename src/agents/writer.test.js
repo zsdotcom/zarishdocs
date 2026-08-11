@@ -31,7 +31,7 @@ test("renderResearchMarkdown keeps citations with access dates", () => {
 
 test("buildWriterPayload sends the architecture outline", () => {
   const payload = buildWriterPayload({ title: "T", outlines: {} });
-  assert.equal(payload.model, "gemini-2.5-flash");
+  assert.equal(payload.model, "gemini-3.6-flash");
   assert.equal(payload.tools, undefined);
 });
 

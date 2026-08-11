@@ -1,5 +1,5 @@
 import { DEFAULT_MODELS, callLLM, extractJson, responseText } from "../api.js";
-import { researchSystemFor } from "./prompts.js";
+import { discoverySystemFor, researchSystemFor } from "./prompts.js";
 import { today, uniqueByUrl } from "./util.js";
 import sourcesConfig from "../../sources.config.json" with { type: "json" };
 
@@ -19,10 +19,44 @@ export function validateResearchPayload(input) {
   return { ok: true };
 }
 
-// F3 (Live Web Scanner): 2.5 Flash with google_search grounding + domain bias.
-export function buildResearchPayload(requirement) {
+// F3 (Live Web Scanner), step 1 — URL discovery. Plain generation (Flash-Lite):
+// given the requirement + preferred domains, propose candidate source URLs.
+// Grounding happens in step 2; discovery itself needs no grounding.
+export function buildDiscoveryPayload(requirement) {
   const topic = requirement.topic || "default";
   const detail = requirement.detail ? ` ${requirement.detail}` : "";
+  return {
+    model: DEFAULT_MODELS.discovery,
+    systemInstruction: {
+      parts: [{ text: discoverySystemFor(requirement, preferredDomainsFor(topic)) }],
+    },
+    contents: [
+      {
+        role: "user",
+        parts: [{ text: `Requirement: ${requirement.title}.${detail}` }],
+      },
+    ],
+    generationConfig: { temperature: 0.2, responseMimeType: "application/json" },
+  };
+}
+
+export function parseDiscoveryResponse(response) {
+  const json = extractJson(responseText(response));
+  const urls = Array.isArray(json?.urls) ? json.urls : [];
+  return urls
+    .map((entry) => (typeof entry === "string" ? entry : entry?.url))
+    .filter((url) => typeof url === "string" && /^https?:\/\//.test(url))
+    .slice(0, 8);
+}
+
+// F3 (Live Web Scanner), step 2 — grounded research. url_context tool fetches
+// the candidate URLs supplied in the prompt and returns real groundingChunks
+// citations. responseMimeType must NOT be JSON here: constraining the output
+// type while tool-calling trips the model into TOO_MANY_TOOL_CALLS.
+export function buildResearchPayload(requirement, candidateUrls) {
+  const topic = requirement.topic || "default";
+  const detail = requirement.detail ? ` ${requirement.detail}` : "";
+  const urls = (candidateUrls || []).join("\n");
   return {
     model: DEFAULT_MODELS.research,
     systemInstruction: {
@@ -31,11 +65,15 @@ export function buildResearchPayload(requirement) {
     contents: [
       {
         role: "user",
-        parts: [{ text: `Research this requirement: ${requirement.title}.${detail}` }],
+        parts: [
+          {
+            text: `Research this requirement: ${requirement.title}.${detail}\nCandidate sources to ground your answer from:\n${urls}`,
+          },
+        ],
       },
     ],
-    tools: [{ google_search: {} }],
-    generationConfig: { temperature: 0.2, responseMimeType: "application/json" },
+    tools: [{ url_context: {} }],
+    generationConfig: { temperature: 0.2 },
   };
 }
 
@@ -93,7 +131,15 @@ export async function researchIdea(input, options = {}) {
 
   const findings = [];
   for (const requirement of input.requirements) {
-    const response = await callLLM(buildResearchPayload(requirement), options);
+    const discoveryResponse = await callLLM(
+      buildDiscoveryPayload(requirement),
+      options,
+    );
+    const candidateUrls = parseDiscoveryResponse(discoveryResponse);
+    const response = await callLLM(
+      buildResearchPayload(requirement, candidateUrls),
+      options,
+    );
     findings.push(parseResearchResponse(response, requirement));
   }
 

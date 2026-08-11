@@ -15,7 +15,7 @@ test("validateIdea caps length at 2000 characters", () => {
 
 test("buildProfilePayload uses Flash-Lite without grounding", () => {
   const payload = buildProfilePayload("A scheduling app for consultants.");
-  assert.equal(payload.model, "gemini-2.5-flash-lite");
+  assert.equal(payload.model, "gemini-3.5-flash-lite");
   assert.equal(payload.tools, undefined);
   assert.equal(payload.contents[0].parts[0].text, "A scheduling app for consultants.");
 });
@@ -61,7 +61,7 @@ test("profileIdea creates a research-ready structure", async () => {
     );
 
   const profile = await profileIdea("A simple scheduling app for independent consultants.");
-  assert.equal(profile.model, "gemini-2.5-flash-lite");
+  assert.equal(profile.model, "gemini-3.5-flash-lite");
   assert.equal(profile.requirements[0].topic, "default");
   assert.equal(profile.tags.includes("mvp"), true);
 });

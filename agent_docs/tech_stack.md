@@ -4,10 +4,12 @@ Verified as of August 11, 2026. Before suggesting any new dependency, check this
 
 - **Frontend:** Vanilla HTML/CSS/JS (ES modules) — no framework, no build step. Static client app served from Cloudflare Pages.
 - **LLM (model routing):**
-  - **Profiler Agent** → Gemini **2.5 Flash-Lite** — highest free-tier daily ceiling, adequate for structured extraction
-  - **Research Agent** → Gemini **2.5 Flash** — required for **free** Google-Search grounding (500 RPD, shared with Flash-Lite; see correction below)
-  - **Architect / Writer Agents** → Gemini **2.5 Flash** — best quality-to-quota ratio
-  - **CORRECTION (2026-08-11):** Gemini **3.x grounding is paid-only** ("Not available" on free tier; 5,000 prompts/mo free then $14/1k queries). The Tech Design's original "3.x family for free grounding" claim is WRONG — free grounding exists only on the 2.5 family (2.5 Flash / Flash-Lite). Do not route grounding calls to 3.x.
+  - **Profiler Agent** → Gemini **3.5 Flash-Lite** — cheap structured extraction
+  - **Discovery step (Research)** → Gemini **3.5 Flash-Lite** — generates candidate URLs, no grounding
+  - **Research Agent** → Gemini **3.6 Flash** — `url_context` grounding (real citations)
+  - **Architect Agent** → Gemini **3.5 Flash**
+  - **Writer Agent** → Gemini **3.6 Flash**
+  - **CORRECTION 2 (2026-08-11):** the 2.5 family is **retired for new accounts** (verified live: `gemini-2.5-flash` / `-lite` → 404 NOT_FOUND), and **`google_search` grounding is quota-blocked** (429) on every model. The fix: `url_context` grounding on 3.5/3.6 Flash returns real `groundingChunks`. `url_context` takes URLs in the **prompt text** (not tool config), and `responseMimeType: "application/json"` must be **omitted** when tools are present (else `TOO_MANY_TOOL_CALLS`). Flash-Lite variants generate plain text but return **no grounding chunks** — don't route grounded calls there.
 - **Backend:** None — exactly one stateless Cloudflare Worker proxy (`worker/index.js`) that injects `GEMINI_API_KEY` (Worker secret), validates Origin, whitelists models, and forwards LLM calls. Optional advanced path: direct browser call with user-supplied key from `sessionStorage`.
 - **Database:** None — IndexedDB for session/project state and embeddings (stores `sessions`, `projects`, `settings`, `embeddings`; Tech Design §10.1); Service Worker cache for the offline shell. (Cache API = URL-addressed resources; IndexedDB = structured/searchable data.)
 - **Search grounding:** Gemini "Grounding with Google Search" via `"tools": [{"google_search": {}}]` on `generateContent` — returns `groundingMetadata` citations. No separate search API. **Gotcha:** Gemini 3 bills per search query executed, not per prompt; on 2.5 free tier the daily 500-RPD budget is shared between Flash and Flash-Lite.

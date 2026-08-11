@@ -24,7 +24,7 @@ test("validateArchitectInput rejects missing research", () => {
 
 test("buildArchitectPayload keeps every citation", () => {
   const payload = buildArchitectPayload(findings);
-  assert.equal(payload.model, "gemini-2.5-flash");
+  assert.equal(payload.model, "gemini-3.5-flash");
   assert.equal(payload.tools, undefined);
   const body = payload.contents[0].parts[0].text;
   assert.equal(body.includes("https://docs.example.com"), true);

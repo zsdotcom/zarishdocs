@@ -1,15 +1,20 @@
 import { AppError, classifyFetchError } from "./errors.js";
 
+// Model routing, verified live 2026-08-11. Gemini 2.5 models are retired for
+// new users (404); free Google-Search grounding is quota-blocked on new
+// accounts. Current models: 3.6-flash / 3.5-flash return url_context grounding
+// chunks, 3.5-flash-lite does not — hence research uses 3.6-flash.
 export const DEFAULT_MODELS = {
-  profiler: "gemini-2.5-flash-lite",
-  research: "gemini-2.5-flash",
-  architect: "gemini-2.5-flash",
-  writer: "gemini-2.5-flash",
+  profiler: "gemini-3.5-flash-lite",
+  discovery: "gemini-3.5-flash-lite",
+  research: "gemini-3.6-flash",
+  architect: "gemini-3.5-flash",
+  writer: "gemini-3.6-flash",
 };
 
-// Replace with the deployed Worker URL before any deploy (see AGENTS.md).
-// The placeholder keeps local dev + tests working without a live proxy.
-export const PROXY_ENDPOINT = "https://zarishdocs-proxy.example.workers.dev";
+// The deployed Worker proxy URL (see SETUP.md §4.3). The app is live once this
+// is the real proxy; the placeholder kept local dev + tests working pre-deploy.
+export const PROXY_ENDPOINT = "https://zarishdocs-proxy.zarishsphere.workers.dev";
 
 const GEMINI_DIRECT = "https://generativelanguage.googleapis.com/v1beta";
 
