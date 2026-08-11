@@ -136,4 +136,4 @@ Both free hosts under consideration comfortably fit a static, client-heavy app l
 
 *ZarishSphere Foundation · V1 · August 2026*
 *License: Apache 2.0 (code) · CC BY 4.0 (documentation)*
-*GitHub: https://github.com/zarishsphere*
+*GitHub: https://github.com/zsdotcom*

@@ -377,7 +377,7 @@ From PRD-ZarishDocs-MVP.md + REVIEW-CHECKLIST.md. The MVP is "working" when:
 
 *ZarishSphere Foundation · V2 · August 2026*
 *License: Apache 2.0 (code) · CC BY 4.0 (documentation)*
-*GitHub: https://github.com/zarishsphere*
+*GitHub: https://github.com/zsdotcom*
 
 ---
 ## Handoff Context
