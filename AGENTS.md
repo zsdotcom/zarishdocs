@@ -12,20 +12,23 @@ ZarishDocs is a browser-only, zero-cost AI research lab. A user types a plain-la
 
 ## Current state
 
-**Phase 1: Foundation — nothing built yet.** There is no `src/`, no `package.json`, no tests. What exists: agent instruction docs (`agent_docs/`), the build-ready Tech Design V2 (`docs/TechDesign-ZarishDocs-MVP.md`), the Worker proxy scaffold (`worker/`), `sources.config.json`, and the workflow files (`MEMORY.md`, `REVIEW-CHECKLIST.md`, `README.md`). Check `MEMORY.md` for the active goal before starting work.
+**Phase 1: Foundation — partially built.** Working: static app shell (`index.html`, `styles.css`), the agent pipeline skeleton (`src/agents/{profiler,research,architect,writer}.js`), `src/api.js` (model routing + `callLLM`), the Worker proxy (`worker/index.js` + `wrangler.toml`), `sources.config.json`, `package.json` with a passing test suite, and the design/instruction docs (`agent_docs/`, `docs/`).
+
+**Not yet live:** the agents return hardcoded/placeholder data — no real Gemini calls, and `src/api.js` `getProxyEndpoint()` still points at a placeholder URL. The SW + IndexedDB shell is still missing. Check `MEMORY.md` for the active goal before starting work.
 
 ## Commands
 
-- **Dev server:** no build step — serve the folder with `python3 -m http.server 8080` and reload. No dev-server framework exists.
-- **Testing:** pinned to Node's built-in runner — `node --test src/` via `npm test` (Tech Design §12) — but **not runnable yet**: no `package.json` exists. Wire it up when the first `src/` files land; don't claim tests pass before that.
-- **Formatting:** Prettier (Tech Design §12). Run before finishing a change set; do not reformat files you didn't touch.
+- **Dev server:** no build step — `npm run serve` (or `dev`) serves the folder at `127.0.0.1:8080`. Loopback-only bind: LAN/mobile testing needs a plain `python3 -m http.server 8080` instead.
+- **Testing:** Node's built-in runner — `npm test` → `node --test "src/**/*.test.js"` (Node ≥ 22; needs `npm`, which may not be on PATH here — run `node --test "src/**/*.test.js"` directly). Currently 4 tests pass (profiler + research). Add tests for new pure logic as it lands.
+- **Syntax check:** `npm run check` → `node --check` over the six shipped `src/` modules.
+- **Formatting:** Prettier (Tech Design §12) — not yet wired into `package.json`. Run before finishing a change set; do not reformat files you didn't touch.
 - **Worker deploy (from `worker/`):** `wrangler secret put GEMINI_API_KEY`, then `wrangler deploy`. App: `wrangler pages deploy src`.
-- **Worker gotcha:** `worker/wrangler.toml` has `ALLOWED_ORIGIN = "https://your-site.pages.dev"` (placeholder). It must be set to the real Pages origin before any deploy, or every browser request gets a 403.
+- **Worker gotcha:** `worker/wrangler.toml` `ALLOWED_ORIGIN` is a comma-separated list that currently includes `localhost:8080` (local dev) plus the `https://your-site.pages.dev` placeholder. The placeholder must be replaced with the real Pages origin before any deploy, or production browsers get a 403.
 
 ## Architecture (non-obvious)
 
 - **No framework, no build step, no backend.** The only server-side piece is the stateless Cloudflare Worker proxy (`worker/index.js`): it injects the `GEMINI_API_KEY` secret, validates Origin, and forwards to Gemini. Never grow it into an app server.
-- **Layered:** UI/orchestration handles request/response only. Agent logic lives in separate service modules (Profiler / Research / Architect / Writer). Never call `fetch`/Gemini from render code.
+- **Layered:** UI/orchestration handles request/response only. Agent logic lives in separate service modules (Profiler / Research / Architect / Writer). Never call `fetch`/Gemini from render code. **Current gap:** the agents are structural skeletons — they validate input and emit the right shapes but return placeholder/hardcoded data; only `profileIdea`/`researchIdea` validation paths are tested. Wiring them to `callLLM` is Phase 2.
 - **Domain sourcing (ADR-002):** rules live in `sources.config.json`, injected into the grounding prompt as a bias plus citation re-ranking — a strong preference, not a hard filter (Gemini grounding has no `site:` restriction).
 - **Local file access (ADR-003):** `browser-fs-access` — File System Access API on Chromium desktop, `<a download>` fallback elsewhere. Surfaced on first load, never a silent failure.
 - **Model routing & verified versions:** `agent_docs/tech_stack.md` is the source of truth — check it before suggesting any new dependency. Critical correction (2026-08-11): free Google-Search grounding is **2.5-family only** (2.5 Flash / Flash-Lite, 500 RPD shared); **Gemini 3.x grounding is paid-only**. Research Agent must use 2.5 Flash; Profiler → 2.5 Flash-Lite; Writer → 2.5 Flash.
@@ -48,8 +51,8 @@ ZarishDocs is a browser-only, zero-cost AI research lab. A user types a plain-la
 
 ## Roadmap
 
-- **Phase 1 — Foundation:** static app shell (SW + IndexedDB skeleton) · deploy Worker proxy + secret · `sources.config.json` (done) · tooling pinned (done, Tech Design §12).
-- **Phase 2 — Core (PRD P0):** F1 One-Click Local Folder Access · F2 Vibe Translator (Profiler) · F3 Live Web Scanner (Research, grounded) · F4 Auto-Writer (Architect + Writer, Mermaid docs).
+- **Phase 1 — Foundation:** static app shell (`index.html` + agent pipeline skeleton done) · SW + IndexedDB shell (missing) · deploy Worker proxy + secret (pending) · `sources.config.json` (done) · tooling pinned (test runner done; Prettier pending).
+- **Phase 2 — Core (PRD P0):** wire agents to real Gemini via the proxy (grounded research) · F1 One-Click Local Folder Access · F2 Vibe Translator (Profiler) · F3 Live Web Scanner (Research, grounded) · F4 Auto-Writer (Architect + Writer, Mermaid docs).
 - **Phase 3 — Polish:** error handling (research failure, unsupported browser, 429 messaging) · mobile/Safari fallback UX · perf + a11y pass (sub-100KB shell; lazy-load the 23MB embedding model) · nice-to-haves (theme toggle, glossary tooltips).
 - **Phase 4 — Launch:** security pass · deploy to Pages + Worker · end-to-end self-test with a real idea · launch checklist.
 
