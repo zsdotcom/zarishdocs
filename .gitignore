@@ -23,4 +23,6 @@ Thumbs.db
 # Runtime artifacts
 dist/
 *.log
-session-ses_010d.md
+
+# Session memory (machine-local, never commit)
+session-ses_0*.md

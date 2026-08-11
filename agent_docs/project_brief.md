@@ -12,5 +12,5 @@
 - Ship the simplest possible solution that solves the user story.
 - Privacy is a feature: no telemetry, no accounts, no cloud storage. The only outbound call is the LLM request.
 - **Honesty constraint:** never claim grounding/model features that don't exist on the free tier. Free Google-Search grounding is 2.5 Flash / Flash-Lite only — 3.x grounding is paid. If a free-tier limit changes, update `MEMORY.md` rather than silently shipping stale claims.
-- Prefer native browser APIs over libraries (`browser-fs-access` is the one sanctioned exception). No framework unless explicitly approved.
+- Prefer native browser APIs over libraries; zero runtime dependencies (Prettier is the only devDep). Local folder writes use the File System Access API with an `<a download>` fallback (`src/file-writer.js`) — no `browser-fs-access`. No framework unless explicitly approved.
 - Every technical claim in generated docs must be cited against a live source with an access date — never rely on model memory for versions.

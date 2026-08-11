@@ -1,0 +1,21 @@
+# Reads Conventional Commits (see semantic-pr.yml) and keeps a standing "Release PR" with an
+# auto-generated CHANGELOG. Merging that PR tags + publishes a GitHub Release automatically.
+# Docs: https://github.com/googleapis/release-please-action
+name: release-please
+
+on:
+  push:
+    branches: ["main"]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  release-please:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: googleapis/release-please-action@v5.0.0
+        with:
+          # Node release type bumps package.json version (v0.1.0 at the repo root).
+          release-type: node

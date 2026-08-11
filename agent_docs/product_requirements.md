@@ -1,6 +1,7 @@
 # Product Requirements
 
 > Filled from `docs/PRD-ZarishDocs-MVP.md`. This is the agent's quick-reference version — keep it short and current.
+> **Build status:** F1–F4 are code-complete and covered by tests (51 passing); pending live end-to-end verification + deployment.
 
 ## Product Summary
 - **Product:** ZarishDocs
@@ -16,7 +17,7 @@
 ## Feature List (MoSCoW)
 
 ### Must Have (P0 — all four required for launch)
-- [ ] One-Click Local Folder Access — `browser-fs-access` direct writes on Chrome/Edge/Opera desktop; clear download fallback on Safari/Firefox/mobile, surfaced on first load
+- [ ] One-Click Local Folder Access — native File System Access API (`src/file-writer.js`) direct writes on Chrome/Edge/Opera desktop; clear `<a download>` fallback on Safari/Firefox/mobile, surfaced on first load (ADR-003)
 - [ ] The Vibe Translator (Profiler Agent) — casual text → structured research requirements, no jargon shown
 - [ ] The Live Web Scanner (Research Agent) — grounded, official-domain-first research with version verification and live citations
 - [ ] The Auto-Writer (Architect & Writer Agents) — linked PRD + ADR + Tech Design Markdown files with Mermaid diagrams

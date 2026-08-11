@@ -1,0 +1,28 @@
+# Org-wide label definitions. Referenced by the repo-lint workflow and sync tooling.
+- name: bug
+  color: "d73a4a"
+  description: "Something isn't working"
+- name: enhancement
+  color: "a2eeef"
+  description: "New feature or request"
+- name: docs
+  color: "0075ca"
+  description: "Documentation change"
+- name: question
+  color: "d876e3"
+  description: "Further information is requested"
+- name: good-first-issue
+  color: "7057ff"
+  description: "Good for newcomers"
+- name: workflow
+  color: "0e8a16"
+  description: "ZarishDocs workflow resources (skills, templates, tool adapters)"
+- name: security
+  color: "b60205"
+  description: "Security-related"
+- name: dependencies
+  color: "0366d6"
+  description: "Dependency updates (Dependabot)"
+- name: stale
+  color: "cccccc"
+  description: "No recent activity"

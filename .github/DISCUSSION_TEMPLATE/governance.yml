@@ -1,0 +1,18 @@
+# Org-wide Discussion template. GitHub Discussions must be enabled per-repo (Settings ->
+# General -> Features -> Discussions) — this file only takes effect on repos that have it on.
+title: "[Governance]: "
+labels: ["question"]
+body:
+  - type: textarea
+    id: topic
+    attributes:
+      label: What are you proposing or asking about?
+    validations:
+      required: true
+  - type: textarea
+    id: context
+    attributes:
+      label: Context
+      description: Links to related issues, PRs, or docs pages, if any.
+    validations:
+      required: false

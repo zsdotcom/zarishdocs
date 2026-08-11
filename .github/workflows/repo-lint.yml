@@ -1,0 +1,115 @@
+name: Repo Lint
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v7.0.1
+
+      - name: Verify required files exist
+        run: |
+          test -f AGENTS.md
+          test -f MEMORY.md
+          test -f REVIEW-CHECKLIST.md
+          test -f README.md
+          test -f sources.config.json
+          test -f agent_docs/tech_stack.md
+          test -f agent_docs/code_patterns.md
+          test -f agent_docs/project_brief.md
+          test -f agent_docs/product_requirements.md
+          test -f agent_docs/testing.md
+          test -f docs/research-ZarishDocs.md
+          test -f docs/PRD-ZarishDocs-MVP.md
+          test -f docs/TechDesign-ZarishDocs-MVP.md
+          test -f templates/AGENTS.md
+          test -f templates/MEMORY.md
+          test -f templates/REVIEW-CHECKLIST.md
+          test -f templates/agent_docs/tech_stack.md
+          test -f .claude/settings.json
+          test -f .github/CONTRIBUTING.md
+          test -f .github/CODE_OF_CONDUCT.md
+          test -f .github/SECURITY.md
+          test -f .github/SUPPORT.md
+          test -f .github/GOVERNANCE.md
+          test -f .github/ISSUE_TEMPLATE/bug_report.yml
+          test -f .github/ISSUE_TEMPLATE/feature_request.yml
+          test -f .github/ISSUE_TEMPLATE/config.yml
+          test -f .github/workflows/greetings.yml
+          test -f .github/workflows/stale.yml
+          test -f scripts/validate.py
+
+      - name: Reject placeholder security contact
+        run: |
+          if grep -rn "\[your-email\]" .github/SECURITY.md .github/CONTRIBUTING.md; then
+            echo "ERROR: Unresolved [your-email] placeholder found"
+            exit 1
+          fi
+
+      - name: Reject stale template-repo references
+        run: |
+          if grep -rniE "vibeworkflow\.app|vibe-coding-prompt-template|part1-deepresearch|part2-prd-mvp|part3-tech-design-mvp|part4-notes-for-agent" .claude/ templates/ scripts/ CITATION.cff examples/README.md; then
+            echo "ERROR: Stale template-repo identity or part-file reference found. Update it to the ZarishDocs naming."
+            exit 1
+          fi
+
+      - name: Enforce zsdocs-* workflow naming
+        run: |
+          if grep -rniE "\bvibe-(workflow|research|prd|techdesign|agents|build)\b" .claude/ templates/ scripts/ README.md .github/; then
+            echo "ERROR: Old vibe-* skill/command naming found. The ZarishDocs workflow uses the zsdocs-* prefix (e.g. zsdocs-research)."
+            exit 1
+          fi
+
+      - name: Reject stale canonical filename references
+        run: |
+          if grep -rEn '`PRD\.md`|`TechDesign\.md`' README.md .claude/README.md .claude/skills/ 2>/dev/null; then
+            echo "ERROR: Stale PRD.md / TechDesign.md filename reference found. Use PRD-[AppName]-MVP.md and TechDesign-[AppName]-MVP.md."
+            exit 1
+          fi
+
+      - name: Reject orphaned skill directories
+        run: |
+          for dir in .claude/skills/*/; do
+            if [ ! -f "${dir}SKILL.md" ]; then
+              echo "ERROR: Orphaned skill directory found: $dir (no SKILL.md)"
+              exit 1
+            fi
+          done
+
+      - name: Set up Python
+        uses: actions/setup-python@v7.0.0
+        with:
+          python-version: "3.x"
+
+      - name: Run contract checks
+        # Single source of truth for the structural contract — contributors
+        # run the same script locally via `python scripts/validate.py`.
+        run: python scripts/validate.py --ci
+
+      - name: Check external links
+        uses: lycheeverse/lychee-action@v2.9.0
+        env:
+          # Authenticated GitHub API access avoids rate limiting on github.com links.
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          # Broken links fail the build; rate-limit responses (HTTP 429) do not.
+          fail: true
+          args: >-
+            --no-progress
+            --max-retries 3
+            --accept '100..=103,200..=299,429'
+            --exclude 'https?://([^/]*\.)?x\.com'
+            --exclude 'https?://([^/]*\.)?twitter\.com'
+            --exclude 'https?://([^/]*\.)?linkedin\.com'
+            README.md
+            docs/
+            .claude/README.md
+            templates/
+            examples/
+            .github/

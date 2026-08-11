@@ -1,0 +1,41 @@
+# CodeQL code scanning — free, unlimited on public repos. Not auto-inherited; copied from the
+# org .github repo and trimmed to this repo's languages (JavaScript/TypeScript + Python for
+# scripts/validate.py).
+# Docs: https://docs.github.com/en/code-security/code-scanning
+name: CodeQL
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+  schedule:
+    - cron: "21 3 * * 1" # weekly, Monday
+
+permissions:
+  contents: read
+  security-events: write
+
+jobs:
+  analyze:
+    name: Analyze
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        language: ["javascript-typescript", "python"]
+    steps:
+      - uses: actions/checkout@v7.0.1
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v4.37.6
+        with:
+          languages: ${{ matrix.language }}
+
+      - name: Autobuild
+        uses: github/codeql-action/autobuild@v4.37.6
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v4.37.6
+        with:
+          category: "/language:${{ matrix.language }}"
