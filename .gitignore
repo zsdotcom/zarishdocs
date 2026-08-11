@@ -16,9 +16,6 @@ dev.vars
 *.local.json
 .mcp.json
 
-# Package managers — zero runtime deps; commit a lockfile if deps are ever added
-pnpm-lock.yaml
-
 # OS noise
 .DS_Store
 Thumbs.db

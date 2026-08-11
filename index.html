@@ -3,7 +3,10 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#176f79" />
     <title>ZarishDocs</title>
+    <link rel="manifest" href="manifest.webmanifest" />
+    <link rel="icon" href="icon.svg" type="image/svg+xml" />
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
@@ -15,21 +18,36 @@
           <h1>Research Lab</h1>
         </div>
       </div>
-      <a class="secondary-button" href="#">Local Folder</a>
+      <div class="topbar-actions">
+        <button id="theme-toggle" class="ghost-button" type="button" aria-pressed="false">
+          <span class="theme-label">Dark</span>
+        </button>
+        <button id="choose-folder" class="secondary-button" type="button">Local Folder</button>
+      </div>
     </header>
+
+    <div id="fs-banner" class="banner banner--warn hidden" role="status">
+      Your browser can't write directly to a folder — generated files will download instead.
+    </div>
+    <div id="offline-banner" class="banner banner--warn hidden" role="status">
+      You're offline. Reconnect to run research.
+    </div>
 
     <main class="app-shell">
       <aside class="panel panel--sidebar">
         <div class="panel-header">
-          <span class="icon">☰</span>
+          <span class="icon" aria-hidden="true">☰</span>
           <span>Workspace</span>
         </div>
-        <nav class="nav">
-          <a class="nav-item is-selected" href="#">New idea</a>
+        <nav class="nav" aria-label="Workspace">
+          <a class="nav-item is-selected" href="#" aria-current="page">New idea</a>
           <a class="nav-item" href="#">Research</a>
           <a class="nav-item" href="#">Documents</a>
           <a class="nav-item" href="#">Settings</a>
         </nav>
+        <p class="privacy-note">
+          Local-only: no account, no cloud storage, no telemetry.
+        </p>
       </aside>
 
       <section class="workspace">
@@ -39,15 +57,15 @@
               <p class="eyebrow">Step 1</p>
               <h2>Describe your app idea</h2>
             </div>
-            <button id="choose-folder" class="primary-button">Choose folder</button>
           </div>
 
           <label class="sr-only" for="idea-input">App idea</label>
           <textarea id="idea-input" placeholder="For example: A simple booking app for independent trainers..."></textarea>
 
           <div class="button-row">
-            <button id="generate" class="primary-button">Generate docs</button>
-            <button id="clear" class="ghost-button">Clear</button>
+            <button id="generate" class="primary-button" type="button">Generate docs</button>
+            <button id="clear" class="ghost-button" type="button">Clear</button>
+            <button id="save-docs" class="ghost-button hidden" type="button">Save to folder</button>
           </div>
         </section>
 
@@ -59,10 +77,10 @@
             </div>
             <span id="status-badge" class="badge badge--idle">Ready</span>
           </div>
-          <div id="progress" class="progress">
-            <div class="progress-step is-active">Brief</div>
-            <div class="progress-step">Research</div>
-            <div class="progress-step">Design</div>
+          <div id="progress" class="progress" aria-label="Pipeline progress">
+            <div class="progress-step is-active" id="step-brief">Brief</div>
+            <div class="progress-step" id="step-research">Research</div>
+            <div class="progress-step" id="step-design">Design</div>
           </div>
         </section>
 
@@ -73,7 +91,7 @@
               <h2>Documents</h2>
             </div>
           </div>
-          <div id="output" class="output">
+          <div id="output" class="output" aria-live="polite" role="region">
             <p class="empty-state">No documents generated yet.</p>
           </div>
         </section>

@@ -1,0 +1,6 @@
+# Hand-crafted docs keep their formatting
+*.md
+docs/
+agent_docs/
+node_modules/
+*.min.js

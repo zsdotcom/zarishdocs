@@ -5,11 +5,16 @@
   "private": true,
   "description": "ZarishDocs local research workspace with a static browser UI and Node test runner.",
   "scripts": {
-    "test": "node --test \"src/**/*.test.js\"",
-    "test:unit": "node --test \"src/**/*.test.js\"",
+    "test": "node --test \"src/**/*.test.js\" \"worker/**/*.test.js\"",
+    "test:unit": "node --test \"src/**/*.test.js\" \"worker/**/*.test.js\"",
     "serve": "python3 -m http.server 8080 --bind 127.0.0.1",
     "dev": "python3 -m http.server 8080 --bind 127.0.0.1",
-    "check": "node --check src/api.js && node --check src/app.js && node --check src/agents/profiler.js && node --check src/agents/research.js && node --check src/agents/architect.js && node --check src/agents/writer.js"
+    "check": "bash -c 'for f in $(find src worker -name \"*.js\" -not -name \"*.test.js\"); do node --check \"$f\" || exit 1; done'",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
+  },
+  "devDependencies": {
+    "prettier": "^3.4.2"
   },
   "engines": {
     "node": ">=22.0.0"

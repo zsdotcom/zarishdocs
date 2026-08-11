@@ -6,7 +6,7 @@ A browser-only, zero-cost AI research lab. You type a plain-language app idea, a
 
 ## Status
 
-**Phase 1 (Foundation) — partially built.** Static app shell, agent pipeline skeleton, Worker proxy, and test suite are in place (4 tests pass). The agents still emit placeholder data — wiring them to real Gemini is Phase 2. Build plan: `AGENTS.md` → Roadmap; active goal: `MEMORY.md`.
+**Phases 1–3 (Foundation + Core + Polish) — code complete, not yet deployed.** Static shell with offline Service Worker, all four agents wired to real Gemini via `callLLM` (grounded research), IndexedDB + native file writes, and a 51-test suite (agents + `api.js` + Worker proxy) all pass. Not live yet: the Worker proxy isn't deployed, `getProxyEndpoint()` is still a placeholder, and no browser verification has run. See `AGENTS.md` → Roadmap and the active goal in `MEMORY.md`.
 
 ## Repository Structure
 
@@ -16,7 +16,7 @@ zarishdocs/
 ├── MEMORY.md                  # Session memory: decisions, known issues, active goal
 ├── REVIEW-CHECKLIST.md        # Definition of done (quality + security)
 ├── agent_docs/                # Detail docs for agents (loaded on demand)
-│   ├── tech_stack.md          # Stack, verified versions, worker proxy sketch
+│   ├── tech_stack.md          # Stack, verified versions, model routing, worker proxy
 │   ├── code_patterns.md       # Architecture, SW/IndexedDB, naming, testing rules
 │   ├── project_brief.md       # Product vision and conventions
 │   ├── product_requirements.md # PRD quick-reference (MoSCoW)
@@ -28,10 +28,22 @@ zarishdocs/
 ├── sources.config.json        # Domain → official-source mapping (ADR-002)
 ├── src/                       # Browser app (no build step, ES modules)
 │   ├── app.js                 # Orchestration: Profiler → Research → Architect → Writer
-│   ├── api.js                 # Model routing + callLLM + getProxyEndpoint
-│   └── agents/                # Service modules (profiler, research, architect, writer)
+│   ├── api.js                 # Model routing + callLLM + error classification + extractJson
+│   ├── errors.js              # AppError + error-kind classification (shared by agents + UI)
+│   ├── db.js                  # IndexedDB stores (ideas, drafts, settings)
+│   ├── file-writer.js         # Native FS API writes + <a download> fallback (ADR-003)
+│   └── agents/                # Service modules + shared prompts.js / util.js
+│       ├── profiler.js        #   F2 Vibe Translator (2.5 Flash-Lite, ungrounded)
+│       ├── research.js        #   F3 Live Web Scanner (2.5 Flash, google_search grounding)
+│       ├── architect.js       #   F4 outline builder (2.5 Flash)
+│       ├── writer.js          #   F4 doc writer, emits Mermaid .mmd (2.5 Flash)
+│       ├── prompts.js         # System prompts (grounding wording pinned, TD §9.2)
+│       └── util.js            # Shared helpers (merge findings, sanitize filenames)
+├── sw.js                      # Service Worker: offline shell + runtime cache
+├── manifest.webmanifest       # PWA manifest
+├── icon.svg                   # App icon (used by manifest + SW)
 ├── worker/                    # Cloudflare Worker LLM proxy (ADR-001)
-│   ├── index.js
+│   ├── index.js               # Origin check, model whitelist, quota-bucket stamp
 │   └── wrangler.toml
 ├── .github/
 │   └── copilot-instructions.md # Thin pointer to AGENTS.md for GitHub Copilot
@@ -40,12 +52,13 @@ zarishdocs/
 
 ## Setup & Commands
 
-- **App:** none required — vanilla JS/HTML/CSS, no build step, no framework. Serve the folder with any static server (e.g. `python3 -m http.server 8080`) and reload the page after changes.
-- **LLM proxy** (from `worker/`): install Wrangler once (`npm i -g wrangler`), `wrangler login`, then `wrangler secret put GEMINI_API_KEY` and `wrangler deploy`.
+- **App:** none required — vanilla JS/HTML/CSS, no build step, no framework. Serve the folder with any static server (`npm run serve` → loopback-only `python3 -m http.server 8080 --bind 127.0.0.1`; plain `python3 -m http.server 8080` for LAN/mobile) and reload after changes. Offline-first: the Service Worker precaches the shell.
+- **LLM proxy** (from `worker/`): `wrangler secret put GEMINI_API_KEY`, then `wrangler deploy`. Set the real Pages origin in `ALLOWED_ORIGIN` (`worker/wrangler.toml`) and swap the placeholder in `getProxyEndpoint()` (`src/api.js`) before going live.
 - **Hosting:** Cloudflare Pages (app) + Cloudflare Workers (proxy) — both free tier, $0.
-- **Testing / linting:** `npm test` (Node's built-in `node:test`, runs `node --test "src/**/*.test.js"`; Node ≥ 22) + Prettier for formatting — pinned in Tech Design §12. `npm run check` for a `node --check` syntax pass.
+- **Testing:** `npm test` → `node --test "src/**/*.test.js" "worker/**/*.test.js"` (Node ≥ 22). `npm run check` for a `node --check` syntax pass. `npm run format` / `format:check` (Prettier).
 
 ## Notes
 
 - The generated product documents follow the vibe-coding workflow (research → PRD → Tech Design); each ends with a machine-readable `Handoff Context` block that feeds the next stage — preserve it when editing.
+- Mermaid architecture diagrams ship as `.mmd` files alongside the docs (no in-app rendering), so they work in any Markdown viewer.
 - **Model-routing correction (Aug 11, 2026):** free Google-Search grounding lives on the Gemini 2.5 family (2.5 Flash / Flash-Lite), not Gemini 3.x — 3.x grounding is paid-only. Details in `agent_docs/tech_stack.md`.

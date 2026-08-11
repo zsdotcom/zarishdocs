@@ -1,3 +1,5 @@
+import { AppError, classifyFetchError } from "./errors.js";
+
 export const DEFAULT_MODELS = {
   profiler: "gemini-2.5-flash-lite",
   research: "gemini-2.5-flash",
@@ -5,27 +7,95 @@ export const DEFAULT_MODELS = {
   writer: "gemini-2.5-flash",
 };
 
+// Replace with the deployed Worker URL before any deploy (see AGENTS.md).
+// The placeholder keeps local dev + tests working without a live proxy.
+export const PROXY_ENDPOINT = "https://zarishdocs-proxy.example.workers.dev";
+
+const GEMINI_DIRECT = "https://generativelanguage.googleapis.com/v1beta";
+
 export function getProxyEndpoint() {
-  return "https://zarishdocs-proxy.example.workers.dev";
+  return PROXY_ENDPOINT;
 }
 
-export async function callLLM(payload) {
-  const endpoint = getProxyEndpoint();
+// ADR-001 hybrid backend: proxy by default; pass options.apiKey to bypass the
+// proxy and call Gemini directly (advanced "bring your own key" path). The key
+// is expected to come from sessionStorage only — never disk.
+export async function callLLM(payload, options = {}) {
+  const apiKey = options.apiKey;
+  let endpoint = getProxyEndpoint();
+  const headers = { "Content-Type": "application/json" };
+  if (apiKey) {
+    endpoint = `${GEMINI_DIRECT}/models/${payload.model}:generateContent`;
+    headers["x-goog-api-key"] = apiKey;
+  }
 
-  const response = await fetch(endpoint, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(payload),
-  });
+  let response;
+  try {
+    response = await fetch(endpoint, {
+      method: "POST",
+      headers,
+      body: JSON.stringify(payload),
+    });
+  } catch (error) {
+    throw classifyFetchError(error);
+  }
 
   if (!response.ok) {
     const errorPayload = await response.json().catch(() => ({}));
-    throw new Error(errorPayload?.error?.message || "LLM request failed");
+    const upstreamMessage =
+      errorPayload?.error?.message || `LLM request failed (${response.status})`;
+    const kind = response.status === 429 ? "quota" : "upstream";
+    throw new AppError(kind, upstreamMessage, {
+      retryable: kind === "upstream",
+      status: response.status,
+    });
   }
 
   return response.json();
+}
+
+// Extract a JSON object from an LLM text response and parse it. A ```json
+// fence is honored when present; otherwise the first balanced {…} block is
+// used, so prose and non-json fences (e.g. mermaid) around the result are
+// ignored. Returns null when no valid object is found.
+export function extractJson(text) {
+  if (typeof text !== "string" || !text.includes("{")) return null;
+  const jsonFence = text.match(/```json\s*\n?([\s\S]*?)```/i);
+  const candidate = jsonFence ? jsonFence[1] : text;
+  const start = candidate.indexOf("{");
+  if (start === -1) return null;
+
+  let depth = 0;
+  let inString = false;
+  let escaped = false;
+  for (let i = start; i < candidate.length; i++) {
+    const ch = candidate[i];
+    if (inString) {
+      if (escaped) escaped = false;
+      else if (ch === "\\") escaped = true;
+      else if (ch === '"') inString = false;
+      continue;
+    }
+    if (ch === '"') inString = true;
+    else if (ch === "{") depth++;
+    else if (ch === "}") {
+      depth--;
+      if (depth === 0) {
+        try {
+          return JSON.parse(candidate.slice(start, i + 1));
+        } catch {
+          return null;
+        }
+      }
+    }
+  }
+  return null;
+}
+
+export function responseText(response) {
+  return (response?.candidates?.[0]?.content?.parts || [])
+    .map((part) => part.text || "")
+    .join("");
 }
 
 export function normalizeIdea(ideaText) {

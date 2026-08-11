@@ -1,0 +1,17 @@
+{
+  "name": "ZarishDocs",
+  "short_name": "ZarishDocs",
+  "description": "Private, free, AI-researched tech specs written straight to your own folder.",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#eef6f4",
+  "theme_color": "#176f79",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

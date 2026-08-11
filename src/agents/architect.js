@@ -1,30 +1,58 @@
-export function architectDocument(input) {
+import { DEFAULT_MODELS, callLLM, extractJson, responseText } from "../api.js";
+import { ARCHITECT_SYSTEM } from "./prompts.js";
+
+export function validateArchitectInput(input) {
   if (!input || typeof input !== "object") {
-    throw new Error("A research result is required before the architect can write.");
+    return { ok: false, error: "A research result is required before the architect can write." };
   }
-
   if (!Array.isArray(input.findings) || input.findings.length === 0) {
-    throw new Error("At least one research finding is required.");
+    return { ok: false, error: "At least one research finding is required." };
   }
+  return { ok: true };
+}
 
-  const architecture = {
+// F4 (Auto-Writer, half 1): verified facts → document outline.
+export function buildArchitectPayload(findings) {
+  const facts = findings.map((f) => ({
+    requirementId: f.requirementId,
+    title: f.title,
+    summary: f.summary,
+    citations: f.citations,
+  }));
+  return {
+    model: DEFAULT_MODELS.architect,
+    systemInstruction: { parts: [{ text: ARCHITECT_SYSTEM }] },
+    contents: [{ role: "user", parts: [{ text: JSON.stringify(facts, null, 2) }] }],
+    generationConfig: { temperature: 0.3, responseMimeType: "application/json" },
+  };
+}
+
+export function parseArchitectResponse(text, findings) {
+  const json = extractJson(text);
+  if (!json) throw new Error("The architect returned an unreadable response. Try again.");
+
+  return {
     title: "ZarishDocs MVP Architecture",
     status: "draft",
     decisions: [
       {
-        title: "Browser-first technical shell",
-        detail: "The user interface, workflow orchestration, and local document generation run in the browser.",
-      },
-      {
-        title: "Server proxy boundary",
-        detail: "LLM access is normalized through a small Cloudflare Worker proxy that injects the API key.",
+        title: json?.adr?.title || "Architecture decisions",
+        detail: json?.adr?.decision || "",
       },
     ],
-    requirements: input.findings.map((finding) => ({
-      id: finding.requirementId || "requirement",
-      title: finding.title || "Requirement",
-    })),
+    outlines: {
+      prd: json?.prd || { title: "PRD", sections: [] },
+      adr: json?.adr || { title: "ADR", sections: [] },
+      techDesign: json?.techDesign || { title: "Tech Design", sections: [] },
+    },
+    requirements: findings.map((f) => ({ id: f.requirementId, title: f.title })),
   };
+}
 
-  return architecture;
+export async function architectDocument(input, options = {}) {
+  const validation = validateArchitectInput(input);
+  if (!validation.ok) throw new Error(validation.error);
+
+  const response = await callLLM(buildArchitectPayload(input.findings), options);
+  return parseArchitectResponse(responseText(response), input.findings);
 }
