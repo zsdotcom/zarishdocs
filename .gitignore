@@ -14,6 +14,10 @@ dev.vars
 .vscode/
 .idea/
 *.local.json
+.mcp.json
+
+# Package managers — zero runtime deps; commit a lockfile if deps are ever added
+pnpm-lock.yaml
 
 # OS noise
 .DS_Store
@@ -22,3 +26,4 @@ Thumbs.db
 # Runtime artifacts
 dist/
 *.log
+session-ses_010d.md

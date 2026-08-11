@@ -6,7 +6,7 @@ A browser-only, zero-cost AI research lab. You type a plain-language app idea, a
 
 ## Status
 
-**Project setup — no application code yet.** The AI-assistant instruction files and configuration scaffolding are in place; the build plan lives in `AGENTS.md` → Roadmap (Phase 1: Foundation).
+**Phase 1 (Foundation) — partially built.** Static app shell, agent pipeline skeleton, Worker proxy, and test suite are in place (4 tests pass). The agents still emit placeholder data — wiring them to real Gemini is Phase 2. Build plan: `AGENTS.md` → Roadmap; active goal: `MEMORY.md`.
 
 ## Repository Structure
 
@@ -26,6 +26,10 @@ zarishdocs/
 │   ├── PRD-ZarishDocs-MVP.md
 │   └── TechDesign-ZarishDocs-MVP.md
 ├── sources.config.json        # Domain → official-source mapping (ADR-002)
+├── src/                       # Browser app (no build step, ES modules)
+│   ├── app.js                 # Orchestration: Profiler → Research → Architect → Writer
+│   ├── api.js                 # Model routing + callLLM + getProxyEndpoint
+│   └── agents/                # Service modules (profiler, research, architect, writer)
 ├── worker/                    # Cloudflare Worker LLM proxy (ADR-001)
 │   ├── index.js
 │   └── wrangler.toml
@@ -34,14 +38,12 @@ zarishdocs/
 └── .gitignore
 ```
 
-Planned during the build (not created yet): `src/` (application code) and `specs/` (feature handoff artifacts).
-
 ## Setup & Commands
 
 - **App:** none required — vanilla JS/HTML/CSS, no build step, no framework. Serve the folder with any static server (e.g. `python3 -m http.server 8080`) and reload the page after changes.
 - **LLM proxy** (from `worker/`): install Wrangler once (`npm i -g wrangler`), `wrangler login`, then `wrangler secret put GEMINI_API_KEY` and `wrangler deploy`.
 - **Hosting:** Cloudflare Pages (app) + Cloudflare Workers (proxy) — both free tier, $0.
-- **Testing / linting:** `npm test` (Node's built-in `node:test`, runs `node --test src/`) + Prettier for formatting — pinned in Tech Design §12.
+- **Testing / linting:** `npm test` (Node's built-in `node:test`, runs `node --test "src/**/*.test.js"`; Node ≥ 22) + Prettier for formatting — pinned in Tech Design §12. `npm run check` for a `node --check` syntax pass.
 
 ## Notes
 

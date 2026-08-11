@@ -24,10 +24,11 @@ ZarishDocs is a browser-only, zero-cost AI research lab. A user types a plain-la
 - **Formatting:** Prettier (Tech Design §12) — not yet wired into `package.json`. Run before finishing a change set; do not reformat files you didn't touch.
 - **Worker deploy (from `worker/`):** `wrangler secret put GEMINI_API_KEY`, then `wrangler deploy`. App: `wrangler pages deploy src`.
 - **Worker gotcha:** `worker/wrangler.toml` `ALLOWED_ORIGIN` is a comma-separated list that currently includes `localhost:8080` (local dev) plus the `https://your-site.pages.dev` placeholder. The placeholder must be replaced with the real Pages origin before any deploy, or production browsers get a 403.
+- **Repo hygiene:** zero npm dependencies — do not `npm install` or commit a lockfile (pnpm-lock.yaml is gitignored; commit one only if a dep is added). Machine-local files (`.vscode/`, `.mcp.json`) are gitignored; never commit or edit them.
 
 ## Architecture (non-obvious)
 
-- **No framework, no build step, no backend.** The only server-side piece is the stateless Cloudflare Worker proxy (`worker/index.js`): it injects the `GEMINI_API_KEY` secret, validates Origin, and forwards to Gemini. Never grow it into an app server.
+- **No framework, no build step, no backend.** The only server-side piece is the stateless Cloudflare Worker proxy (`worker/index.js`): it injects the `GEMINI_API_KEY` secret, validates Origin, and forwards to Gemini. It whitelists the model string (SSRF guard) and stamps every response with `x-zarish-quota-bucket` (`grounding` vs `generation`) so quota usage is testable. Never grow it into an app server.
 - **Layered:** UI/orchestration handles request/response only. Agent logic lives in separate service modules (Profiler / Research / Architect / Writer). Never call `fetch`/Gemini from render code. **Current gap:** the agents are structural skeletons — they validate input and emit the right shapes but return placeholder/hardcoded data; only `profileIdea`/`researchIdea` validation paths are tested. Wiring them to `callLLM` is Phase 2.
 - **Domain sourcing (ADR-002):** rules live in `sources.config.json`, injected into the grounding prompt as a bias plus citation re-ranking — a strong preference, not a hard filter (Gemini grounding has no `site:` restriction).
 - **Local file access (ADR-003):** `browser-fs-access` — File System Access API on Chromium desktop, `<a download>` fallback elsewhere. Surfaced on first load, never a silent failure.
