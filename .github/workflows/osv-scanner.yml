@@ -1,0 +1,25 @@
+# Complements Dependabot: cross-checks against the OSV vulnerability database, catches
+# transitive deps and ecosystems Dependabot's per-manifest scan sometimes misses.
+# Docs: https://github.com/google/osv-scanner-action
+name: OSV-Scanner
+
+on:
+  pull_request:
+    branches: ["main"]
+  push:
+    branches: ["main"]
+  schedule:
+    - cron: "12 6 * * 4" # weekly, Thursday
+
+permissions:
+  contents: read
+  security-events: write
+
+jobs:
+  scan:
+    uses: google/osv-scanner-action/.github/workflows/osv-scanner-reusable.yml@v2.5.0
+    with:
+      scan-args: |-
+        --recursive
+        --skip-git
+        ./

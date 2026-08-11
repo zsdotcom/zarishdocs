@@ -59,6 +59,6 @@ zarishdocs/
 
 ## Notes
 
-- The generated product documents follow the vibe-coding workflow (research → PRD → Tech Design); each ends with a machine-readable `Handoff Context` block that feeds the next stage — preserve it when editing.
+- The generated product documents follow the ZarishDocs workflow (research → PRD → Tech Design); each ends with a machine-readable `Handoff Context` block that feeds the next stage — preserve it when editing.
 - Mermaid architecture diagrams ship as `.mmd` files alongside the docs (no in-app rendering), so they work in any Markdown viewer.
 - **Model-routing correction (Aug 11, 2026):** free Google-Search grounding lives on the Gemini 2.5 family (2.5 Flash / Flash-Lite), not Gemini 3.x — 3.x grounding is paid-only. Details in `agent_docs/tech_stack.md`.

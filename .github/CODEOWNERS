@@ -1,0 +1,15 @@
+# Rename to CODEOWNERS (no extension) and copy into a repo's root, docs/, or .github/ folder.
+# NOT auto-inherited from the org .github repo — GitHub only auto-applies community health
+# files org-wide, not CODEOWNERS. Copy this into each repo that wants review auto-assignment.
+#
+# Format: path-pattern  @owner-or-team
+# Requires the referenced team(s) to exist under zsdotcom (see 00-ORG-SETUP-GUIDE.md, section 3)
+# and to have at least Read access to this repo, or GitHub will silently skip the assignment.
+
+# Fallback: any file not matched below goes to maintainers.
+*                       @zsdotcom/maintainers
+
+# Docs and workflow resources in this repo.
+/docs/                  @zsdotcom/maintainers
+/templates/             @zsdotcom/maintainers
+/.github/               @zsdotcom/maintainers

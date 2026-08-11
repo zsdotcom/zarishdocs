@@ -1,0 +1,18 @@
+cff-version: 1.0.0
+message: "If you use this project, please cite it using the metadata below."
+title: "ZarishDocs"
+type: software
+authors:
+  - name: "ZarishSphere Foundation"
+repository-code: "https://github.com/zsdotcom/zarishdocs"
+url: "https://github.com/zsdotcom/zarishdocs"
+license: "MIT"
+preferred-citation:
+  type: software
+  title: "ZarishDocs"
+  authors:
+    - name: "ZarishSphere Foundation"
+  url: "https://github.com/zsdotcom"
+  year: 2026
+  version: "1.0.0"
+  date-released: ""

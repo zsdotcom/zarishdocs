@@ -1,0 +1,31 @@
+name: Feature request
+description: Propose a new capability or improvement for ZarishDocs or its workflow resources
+title: "[Feature]: "
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem does this solve?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+    validations:
+      required: true
+  - type: textarea
+    id: area
+    attributes:
+      label: Which area is this about?
+      description: App UI, agents/prompts, Worker proxy, docs, workflow skills/templates, tooling.
+    validations:
+      required: false
+  - type: textarea
+    id: constraints
+    attributes:
+      label: Constraints / trade-offs
+      description: Note how this stays privacy-first, zero-cost, and within the zero-runtime-dependency rule (check agent_docs/tech_stack.md).
+    validations:
+      required: false
