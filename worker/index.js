@@ -10,10 +10,15 @@
 
 const GEMINI_API = "https://generativelanguage.googleapis.com/v1beta";
 
-// Free-tier grounding requires the 2.5 family — 3.x grounding is paid-only
-// (corrected 2026-08-11). Whitelisting the model string also closes the
-// SSRF/abuse vector of forwarding arbitrary model names.
-const ALLOWED_MODELS = new Set(["gemini-2.5-flash", "gemini-2.5-flash-lite"]);
+// Free-tier grounding on 2.5 models is retired for new users (404, 2026-08-11),
+// and google_search grounding is quota-blocked on new accounts. The free path
+// today is url_context grounding on the current 3.x models. Whitelisting the
+// model string also closes the SSRF/abuse vector of forwarding arbitrary names.
+const ALLOWED_MODELS = new Set([
+  "gemini-3.5-flash",
+  "gemini-3.5-flash-lite",
+  "gemini-3.6-flash",
+]);
 
 const CORS_HEADERS = (origin) => ({
   "Access-Control-Allow-Origin": origin,
@@ -73,12 +78,12 @@ export default {
       );
     }
 
-    // Which quota bucket is this call consuming? Grounding ("google_search"
-    // tool) and plain generation are tracked separately by Google, and a
-    // misconfiguration can miscount grounded calls against the wrong bucket
-    // (ADR-001). Surface a hint so this is visible in testing.
+    // Which quota bucket is this call consuming? Grounding (google_search or
+    // url_context tools) and plain generation are tracked separately by
+    // Google, and a misconfiguration can miscount grounded calls against the
+    // wrong bucket (ADR-001). Surface a hint so this is visible in testing.
     const isGrounded = Array.isArray(payload.tools) && payload.tools.some(
-      (t) => t && typeof t.google_search === "object",
+      (t) => t && (typeof t.google_search === "object" || typeof t.url_context === "object"),
     );
     const quotaBucket = isGrounded ? "grounding" : "generation";
 

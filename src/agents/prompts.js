@@ -32,10 +32,28 @@ export function researchSystemFor(requirement, preferredDomains) {
   return `
 ${bias}
 For every tool/library/service you recommend, report its current stable
-version and release date AS OF TODAY. Do not rely on memory — use the search
-tool. Return each verified fact with its source URL and the access date.
+version and release date AS OF TODAY. Ground your answer by fetching the
+candidate URLs provided in the user message with the url_context tool — do not
+rely on memory. Only cite sources you actually retrieved; return each verified
+fact with its source URL and the access date.
 ${JSON_ONLY}
 Return this shape: {"finding": {"title": string, "summary": string, "citations": [{"title": string, "url": string, "accessDate": "YYYY-MM-DD"}]}}
+`.trim();
+}
+
+// F3 (Live Web Scanner), step 1 — discover candidate source URLs. Runs BEFORE
+// the grounded call: url_context can only fetch URLs present in the prompt, so
+// the model proposes the candidates, the research step grounds against them.
+export function discoverySystemFor(requirement, preferredDomains) {
+  const bias = preferredDomains.length
+    ? `Prefer URLs on official domains: ${preferredDomains.join(", ")}.`
+    : "Prefer authoritative official documentation.";
+
+  return `
+Suggest up to 8 real, existing documentation URLs most likely to cover this
+requirement. ${bias} Use real, stable URLs (homepages or canonical docs pages) —
+do not invent deep links you cannot verify. ${JSON_ONLY}
+Return this shape: {"urls": [{"url": string, "reason": string}]}
 `.trim();
 }
 

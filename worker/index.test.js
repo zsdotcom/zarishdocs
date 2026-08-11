@@ -7,7 +7,7 @@ const ENV = {
   GEMINI_API_KEY: "test-secret",
 };
 
-function request({ method = "POST", origin, body, model = "gemini-2.5-flash" } = {}) {
+function request({ method = "POST", origin, body, model = "gemini-3.6-flash" } = {}) {
   const payload = body ?? { model, contents: [{ parts: [{ text: "hi" }] }] };
   return new Request("https://worker.example/proxy", {
     method,
@@ -36,7 +36,7 @@ test("rejects non-POST methods", async () => {
 
 test("rejects a model outside the whitelist (SSRF guard)", async () => {
   const response = await worker.fetch(
-    request({ origin: "http://localhost:8080", model: "gemini-3-pro" }),
+    request({ origin: "http://localhost:8080", model: "gemini-2.5-flash" }),
     ENV,
   );
   assert.equal(response.status, 400);
@@ -53,15 +53,15 @@ test("forwards grounded calls and stamps the grounding quota bucket", async () =
   };
 
   const payload = {
-    model: "gemini-2.5-flash",
+    model: "gemini-3.6-flash",
     contents: [{ parts: [{ text: "hi" }] }],
-    tools: [{ google_search: {} }],
+    tools: [{ url_context: {} }],
   };
   const response = await worker.fetch(request({ origin: "http://localhost:8080", body: payload }), ENV);
   assert.equal(response.status, 200);
   assert.equal(response.headers.get("x-zarish-quota-bucket"), "grounding");
   assert.equal(upstreamKey, "test-secret");
-  assert.equal(upstreamUrl.includes("/models/gemini-2.5-flash:generateContent"), true);
+  assert.equal(upstreamUrl.includes("/models/gemini-3.6-flash:generateContent"), true);
 });
 
 test("stamps generation bucket when no search tool is present", async () => {

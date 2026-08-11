@@ -30,7 +30,7 @@ test("callLLM maps 429 to a quota AppError", async () => {
     new Response(JSON.stringify({ error: { message: "Rate limit" } }), { status: 429 });
 
   await assert.rejects(
-    () => callLLM({ model: "gemini-2.5-flash", contents: [] }),
+    () => callLLM({ model: "gemini-3.6-flash", contents: [] }),
     (error) => error instanceof AppError && error.kind === "quota",
   );
 });
@@ -39,7 +39,7 @@ test("callLLM returns parsed json on success", async () => {
   globalThis.fetch = async () =>
     new Response(JSON.stringify({ candidates: [] }), { status: 200 });
 
-  const result = await callLLM({ model: "gemini-2.5-flash", contents: [] });
+  const result = await callLLM({ model: "gemini-3.6-flash", contents: [] });
   assert.deepEqual(result, { candidates: [] });
 });
 
@@ -50,7 +50,7 @@ test("callLLM uses the direct Gemini endpoint when an apiKey is given", async ()
     return new Response(JSON.stringify({ candidates: [] }), { status: 200 });
   };
 
-  await callLLM({ model: "gemini-2.5-flash", contents: [] }, { apiKey: "abc" });
+  await callLLM({ model: "gemini-3.6-flash", contents: [] }, { apiKey: "abc" });
   assert.equal(calledUrl.includes("generativelanguage.googleapis.com"), true);
 });
 
@@ -60,7 +60,7 @@ test("callLLM classifies network failure as offline", async () => {
   };
 
   await assert.rejects(
-    () => callLLM({ model: "gemini-2.5-flash", contents: [] }),
+    () => callLLM({ model: "gemini-3.6-flash", contents: [] }),
     (error) => error instanceof AppError && error.kind === "offline",
   );
 });

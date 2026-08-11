@@ -1,8 +1,10 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {
+  buildDiscoveryPayload,
   buildResearchPayload,
   citationsFromResponse,
+  parseDiscoveryResponse,
   parseResearchResponse,
   preferredDomainsFor,
   rankCitations,
@@ -21,21 +23,65 @@ test("preferredDomainsFor reads from sources.config.json", () => {
   assert.deepEqual(preferredDomainsFor("unknown-topic"), []);
 });
 
-test("buildResearchPayload uses 2.5 Flash with google_search grounding", () => {
-  const payload = buildResearchPayload({ id: "r1", title: "Booking", topic: "npm-package" });
-  assert.equal(payload.model, "gemini-2.5-flash");
-  assert.deepEqual(payload.tools, [{ google_search: {} }]);
+test("buildDiscoveryPayload uses Flash-Lite with the domain bias, no tools", () => {
+  const payload = buildDiscoveryPayload({ id: "r1", title: "Booking", topic: "npm-package" });
+  assert.equal(payload.model, "gemini-3.5-flash-lite");
+  assert.equal(payload.tools, undefined);
+  const prompt = payload.systemInstruction.parts[0].text;
+  assert.equal(prompt.includes("npmjs.com"), true);
+  assert.equal(prompt.includes('"urls"'), true);
+});
+
+test("parseDiscoveryResponse extracts candidate URLs from the discovery call", () => {
+  const response = {
+    candidates: [
+      {
+        content: {
+          parts: [
+            {
+              text: JSON.stringify({
+                urls: [
+                  { url: "https://www.npmjs.com/package/foo", reason: "docs" },
+                  "https://github.com/foo/bar",
+                  { url: "not-a-url", reason: "bad" },
+                ],
+              }),
+            },
+          ],
+        },
+      },
+    ],
+  };
+  const urls = parseDiscoveryResponse(response);
+  assert.deepEqual(urls, [
+    "https://www.npmjs.com/package/foo",
+    "https://github.com/foo/bar",
+  ]);
+});
+
+test("buildResearchPayload uses 3.6 Flash with url_context grounding and the candidate URLs", () => {
+  const payload = buildResearchPayload(
+    { id: "r1", title: "Booking", topic: "npm-package" },
+    ["https://www.npmjs.com/package/foo", "https://github.com/foo/bar"],
+  );
+  assert.equal(payload.model, "gemini-3.6-flash");
+  assert.deepEqual(payload.tools, [{ url_context: {} }]);
+  const userText = payload.contents[0].parts[0].text;
+  assert.equal(userText.includes("https://www.npmjs.com/package/foo"), true);
+  assert.equal(userText.includes("https://github.com/foo/bar"), true);
+  assert.equal(payload.generationConfig.responseMimeType, undefined);
 });
 
 test("buildResearchPayload injects the domain bias into the prompt", () => {
-  const payload = buildResearchPayload({ id: "r1", title: "Booking", topic: "npm-package" });
+  const payload = buildResearchPayload({ id: "r1", title: "Booking", topic: "npm-package" }, []);
   const prompt = payload.systemInstruction.parts[0].text;
   assert.equal(prompt.includes("npmjs.com"), true);
   assert.equal(prompt.includes("prioritize official sources"), true);
+  assert.equal(prompt.includes("url_context"), true);
 });
 
 test("buildResearchPayload falls back to authoritative-sources wording", () => {
-  const payload = buildResearchPayload({ id: "r1", title: "Booking", topic: "default" });
+  const payload = buildResearchPayload({ id: "r1", title: "Booking", topic: "default" }, []);
   assert.equal(payload.systemInstruction.parts[0].text.includes("Use authoritative sources."), true);
 });
 
@@ -99,9 +145,26 @@ test("parseResearchResponse merges, dedupes and ranks citations", () => {
   assert.equal(finding.citations[0].url, "https://docs.npmjs.com");
 });
 
-test("researchIdea produces findings per requirement", async () => {
+test("researchIdea runs discovery then grounded research per requirement", async () => {
   const requirement = { id: "scope", title: "Booking flow", topic: "default" };
-  globalThis.fetch = async () =>
+
+  const responses = [
+    // Discovery call → candidate URLs.
+    new Response(
+      JSON.stringify({
+        candidates: [
+          {
+            content: {
+              parts: [
+                { text: JSON.stringify({ urls: [{ url: "https://s.example.com", reason: "docs" }] }) },
+              ],
+            },
+          },
+        ],
+      }),
+      { status: 200 },
+    ),
+    // Research call → finding with citations.
     new Response(
       JSON.stringify({
         candidates: [
@@ -123,10 +186,12 @@ test("researchIdea produces findings per requirement", async () => {
         ],
       }),
       { status: 200 },
-    );
+    ),
+  ];
+  globalThis.fetch = async () => responses.shift();
 
   const research = await researchIdea({ requirements: [requirement] });
-  assert.equal(research.model, "gemini-2.5-flash");
+  assert.equal(research.model, "gemini-3.6-flash");
   assert.equal(research.findings.length, 1);
   assert.equal(research.findings[0].citations.length >= 1, true);
 });
