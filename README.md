@@ -41,7 +41,7 @@ Planned during the build (not created yet): `src/` (application code) and `specs
 - **App:** none required — vanilla JS/HTML/CSS, no build step, no framework. Serve the folder with any static server (e.g. `python3 -m http.server 8080`) and reload the page after changes.
 - **LLM proxy** (from `worker/`): install Wrangler once (`npm i -g wrangler`), `wrangler login`, then `wrangler secret put GEMINI_API_KEY` and `wrangler deploy`.
 - **Hosting:** Cloudflare Pages (app) + Cloudflare Workers (proxy) — both free tier, $0.
-- **Testing / linting:** not pinned yet — the Tech Design leaves the toolchain open; settle it in Phase 1.
+- **Testing / linting:** `npm test` (Node's built-in `node:test`, runs `node --test src/`) + Prettier for formatting — pinned in Tech Design §12.
 
 ## Notes
 

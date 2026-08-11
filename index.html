@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ZarishDocs</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="brand">
+        <span class="brand-icon">Z</span>
+        <div>
+          <p class="eyebrow">ZarishDocs</p>
+          <h1>Research Lab</h1>
+        </div>
+      </div>
+      <a class="secondary-button" href="#">Local Folder</a>
+    </header>
+
+    <main class="app-shell">
+      <aside class="panel panel--sidebar">
+        <div class="panel-header">
+          <span class="icon">☰</span>
+          <span>Workspace</span>
+        </div>
+        <nav class="nav">
+          <a class="nav-item is-selected" href="#">New idea</a>
+          <a class="nav-item" href="#">Research</a>
+          <a class="nav-item" href="#">Documents</a>
+          <a class="nav-item" href="#">Settings</a>
+        </nav>
+      </aside>
+
+      <section class="workspace">
+        <section class="card composer-card">
+          <div class="card-header">
+            <div>
+              <p class="eyebrow">Step 1</p>
+              <h2>Describe your app idea</h2>
+            </div>
+            <button id="choose-folder" class="primary-button">Choose folder</button>
+          </div>
+
+          <label class="sr-only" for="idea-input">App idea</label>
+          <textarea id="idea-input" placeholder="For example: A simple booking app for independent trainers..."></textarea>
+
+          <div class="button-row">
+            <button id="generate" class="primary-button">Generate docs</button>
+            <button id="clear" class="ghost-button">Clear</button>
+          </div>
+        </section>
+
+        <section class="card status-card">
+          <div class="card-header compact">
+            <div>
+              <p class="eyebrow">Run status</p>
+              <h2 id="status-title">Idle</h2>
+            </div>
+            <span id="status-badge" class="badge badge--idle">Ready</span>
+          </div>
+          <div id="progress" class="progress">
+            <div class="progress-step is-active">Brief</div>
+            <div class="progress-step">Research</div>
+            <div class="progress-step">Design</div>
+          </div>
+        </section>
+
+        <section class="card results-card">
+          <div class="card-header compact">
+            <div>
+              <p class="eyebrow">Generated output</p>
+              <h2>Documents</h2>
+            </div>
+          </div>
+          <div id="output" class="output">
+            <p class="empty-state">No documents generated yet.</p>
+          </div>
+        </section>
+      </section>
+    </main>
+
+    <script type="module" src="src/app.js"></script>
+  </body>
+</html>

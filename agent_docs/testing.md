@@ -1,8 +1,8 @@
 # Testing Strategy
 
 ## Frameworks
-- **Unit Tests:** TBD — the Tech Design pins no test framework. Agree one in Phase 1 before writing tests (candidates: Node's built-in `node:test`, or Vitest — no framework constraint, vanilla JS).
-- **E2E Tests:** TBD — manual browser verification is mandatory for UI work regardless: confirm the folder-write path in Chromium AND the download fallback in Safari/Firefox/mobile.
+- **Unit Tests:** Node's built-in `node:test` — pinned in Tech Design §12. Run all tests via `npm test` (which runs `node --test src/`). Not runnable until `package.json` exists — wire it up when the first `src/` files land.
+- **E2E Tests:** manual browser verification is mandatory for UI work regardless: confirm the folder-write path in Chromium AND the download fallback in Safari/Firefox/mobile.
 
 ## Rules & Requirements
 - **Coverage:** Unit-test all new utilities, especially pure agent logic (Profiler requirement parsing, citation re-ranking, `sources.config.json` validation). No target % is set.
@@ -18,5 +18,5 @@
 5. Grounding quota accounting: Worker proxy logs which quota bucket a response consumed (grounding vs generation) — the ADR-001 miscount risk.
 
 ## Execution
-- Command to run all tests: TBD (to be recorded here once the framework is agreed in Phase 1)
-- Command to run a single test file: TBD
+- Command to run all tests: `npm test` (runs `node --test src/`) — wired once `package.json` exists
+- Command to run a single test file: `node --test src/agents/research.test.js`
