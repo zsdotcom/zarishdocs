@@ -2,7 +2,16 @@
   "name": "zarishdocs",
   "version": "0.1.0",
   "type": "module",
+  "private": true,
+  "description": "ZarishDocs local research workspace with a static browser UI and Node test runner.",
   "scripts": {
-    "test": "node --test"
+    "test": "node --test \"src/**/*.test.js\"",
+    "test:unit": "node --test \"src/**/*.test.js\"",
+    "serve": "python3 -m http.server 8080 --bind 127.0.0.1",
+    "dev": "python3 -m http.server 8080 --bind 127.0.0.1",
+    "check": "node --check src/api.js && node --check src/app.js && node --check src/agents/profiler.js && node --check src/agents/research.js && node --check src/agents/architect.js && node --check src/agents/writer.js"
+  },
+  "engines": {
+    "node": ">=22.0.0"
   }
 }
