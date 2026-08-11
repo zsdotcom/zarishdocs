@@ -1,0 +1,11 @@
+# ZarishDocs LLM proxy (ADR-001 default path)
+# A single stateless Worker: injects the Gemini API key server-side so no
+# key ever ships in client JS. Runs on Cloudflare's free tier.
+name = "zarishdocs-proxy"
+main = "index.js"
+compatibility_date = "2026-08-01"
+
+[vars]
+# Scoped CORS. Replace with your real Cloudflare Pages origin before deploy.
+# Local dev: you can temporarily add http://localhost:8080 via wrangler vars.
+ALLOWED_ORIGIN = "https://your-site.pages.dev"

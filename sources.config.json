@@ -1,0 +1,14 @@
+{
+  "version": 1,
+  "domains": {
+    "github": ["docs.github.com", "github.blog", "github.com"],
+    "cloudflare": ["developers.cloudflare.com", "blog.cloudflare.com"],
+    "google-cloud": ["cloud.google.com", "developers.google.com"],
+    "google-workspace": ["developers.google.com", "workspace.google.com"],
+    "fhir": ["hl7.org", "build.fhir.org"],
+    "npm-package": ["npmjs.com", "github.com"],
+    "browser-api": ["developer.mozilla.org", "developer.chrome.com", "caniuse.com"],
+    "w3c-standard": ["w3.org", "webmachinelearning.github.io"],
+    "default": []
+  }
+}

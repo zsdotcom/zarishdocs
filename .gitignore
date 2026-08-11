@@ -1,0 +1,24 @@
+# Dependencies
+node_modules/
+
+# Cloudflare / Wrangler
+.wrangler/
+dev.vars
+
+# Secrets — never commit
+.env
+.env.*
+!.env.example
+
+# Local tool state
+.vscode/
+.idea/
+*.local.json
+
+# OS noise
+.DS_Store
+Thumbs.db
+
+# Runtime artifacts
+dist/
+*.log

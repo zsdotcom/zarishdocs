@@ -17,9 +17,21 @@ Prefer these patterns over inventing new ones. Fill in each section from the Tec
 
 ## State Management
 - **Server state:** none — no server-side state; the LLM is stateless request/response.
-- **Client state:** IndexedDB for session/project state and embedding cache; Service Worker for offline shell. Ephemeral UI state in plain module variables (no state library).
+- **Client state:** IndexedDB for session/project state and embeddings; Service Worker for offline shell. Ephemeral UI state in plain module variables (no state library).
 - **Forms:** the "idea chat" is a plain form handler that feeds the Profiler Agent — no form library.
 - **Rule:** Prefer the simplest working approach for MVP scope. Do not add a state library if built-in state is sufficient.
+
+## Service Worker Strategy (offline shell)
+- One versioned constant `CACHE_V` (manual date/build string — no build step) bumped whenever the shell changes.
+- **`shell-v<N>` cache:** precache `index.html`, CSS, app JS, worker files. Cache-first, never revalidate (immutable).
+- **`runtime-cdn-v<N>` cache:** Mermaid CDN, stale-while-revalidate — do NOT precache CDN assets at install (Mermaid is ~3.4MB; the 23MB model would blow up install time). Gives offline-after-first-render.
+- **`transformers-cache`:** left entirely to transformers.js (automatic) — never touch it.
+- Navigation: network-first falling back to shell; `skipWaiting()` only after `addAll` completes; delete old `shell-*` caches in `activate`.
+- **Cloudflare Pages gotcha:** `_headers` and `_redirects` are not served as static assets — never include them in `cache.addAll()` or SW registration breaks.
+
+## IndexedDB
+- Version the DB (`onupgradeneeded`), handle `onblocked` (another tab open), call `navigator.storage.persist()` to reduce eviction.
+- Raw IDB is fine — no `idb`/Dexie dependency needed for the MVP schema.
 
 ## Error Handling
 - Normalize errors at service/API boundaries — never let raw exceptions reach the UI.

@@ -45,7 +45,7 @@ The research identified two viable options and asked for the "best, most flexibl
 3. Both paths call the **same agent logic** — the app only swaps which endpoint it calls and whether it injects a stored key. This keeps the codebase single-path past the network layer.
 
 ### Search mechanism (resolves a gap the original research left open)
-The Research Agent does not need a separate search API. **Gemini's built-in "Grounding with Google Search" tool** is genuinely free at meaningful volume: **5,000 grounded prompts/month, free, on the Gemini 3.x model family**, separate from the plain generation quota. Enabling it is a single tool flag on the same API call already being proxied — no second vendor, no second free-tier to track. The model returns inline citations and source URLs directly, which is exactly what the citation-first requirement needs.
+The Research Agent does not need a separate search API. **Gemini's built-in "Grounding with Google Search" tool** is free on the **Gemini 2.5 family** — up to **500 grounded requests/day shared across 2.5 Flash and Flash-Lite** on the free tier, tracked separately from plain generation quota. **Correction (verified 2026-08-11):** grounding on the **Gemini 3.x family is paid-only** (5,000 prompts/month free then billed, priced per search query executed rather than per prompt) — do not route grounded calls to 3.x. Enabling it is a single tool flag (`"tools": [{"google_search": {}}]`) on the same API call already being proxied — no second vendor, no second free-tier to track. The model returns inline citations and source URLs directly (`groundingMetadata`), which is exactly what the citation-first requirement needs.
 
 **Caveat to build in, not just note:** grounding quota and plain generation quota are tracked separately by Google, but at least one third-party report found a client misconfiguration miscounting grounded calls against the wrong (much smaller) quota bucket. The Worker proxy should explicitly set the tool-use path correctly and log which quota a response consumed, so this failure mode is caught in testing rather than surfacing as a mysterious 429 for the user.
 
@@ -53,7 +53,7 @@ The Research Agent does not need a separate search API. **Gemini's built-in "Gro
 | Task | Model | Why |
 |---|---|---|
 | Profiler Agent (casual text → structured requirements) | Gemini Flash-Lite | Highest daily ceiling, adequate for structured extraction |
-| Research Agent (grounded search + fact verification) | Gemini Flash (3.x family, for grounding access) | Grounding tool requires 3.x family for the free 5,000/month allowance |
+| Research Agent (grounded search + fact verification) | Gemini 2.5 Flash | Free Google-Search grounding lives on the 2.5 family (500 RPD shared Flash + Flash-Lite); 3.x grounding is paid-only (corrected 2026-08-11) |
 | Architect/Writer Agents (final document synthesis) | Gemini Flash | Best quality-to-quota ratio; Pro is no longer free-tier as of April 2026 |
 
 ### Consequences
@@ -146,7 +146,7 @@ Accepted
 
 | Layer | Choice | Version (verified in research, August 2026) |
 |---|---|---|
-| LLM | Gemini Flash-Lite / Flash (3.x family for grounding) | Current free-tier family as of Apr 2026 pricing update |
+| LLM | Gemini 2.5 Flash-Lite (Profiler/Writer) / 2.5 Flash (Research grounding) | Free grounding is 2.5-family only — 3.x grounding is paid-only (verified 2026-08-11) |
 | Local file access | `browser-fs-access` (npm) | Latest — ponyfill, no hard version pin needed |
 | Diagram rendering | Mermaid.js | 11.16.1 |
 | Semantic search (client-side, lazy-loaded) | transformers.js + `all-MiniLM-L6-v2` (ONNX) | ~23MB model, loaded on first use only |
