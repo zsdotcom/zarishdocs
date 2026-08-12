@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.0](https://github.com/zsdotcom/zarishdocs/compare/v1.0.1...v1.1.0) (2026-08-12)
+
+
+### Features
+
+* ZarishSphere palette branding + non-technical docs rewrite ([#12](https://github.com/zsdotcom/zarishdocs/issues/12)) ([b32f060](https://github.com/zsdotcom/zarishdocs/commit/b32f060d197cc1e45f919733b1f0505f3c6ac169))
+
 ## [1.0.1](https://github.com/zsdotcom/zarishdocs/compare/v1.0.0...v1.0.1) (2026-08-12)
 
 
