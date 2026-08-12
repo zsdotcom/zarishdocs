@@ -5,15 +5,19 @@ DO NOT delete historical context if it is still relevant. Compress older complet
 -->
 
 ## 🏗️ Active Phase & Goal
-**Current Task:** Live deployment of the rearchitected pipeline (2026-08-11). Worker proxy deployed at `https://zarishdocs-proxy.zarishsphere.workers.dev` with `GEMINI_API_KEY` secret; Pages site live at `https://zarishdocs.pages.dev` (deployed from repo **root**, not `src/`). Code + tests updated for the new model routing (2.5 family retired; `url_context` grounding). Review-fix pass done: discovery retry/guard, deploy-command + placeholder doc updates, unused-param cleanup, test fixture. Remaining: E2E self-test against the live proxy, commit + push.
+**Current Task:** Post-merge hardening of the rearchitected pipeline (2026-08-12). Everything from the review-fix pass is committed and merged to `main` (`2e24b6c`, PR #4): discovery retry/guard, deploy-command + placeholder doc updates, unused-param cleanup, test fixture, plus the CI/ruleset alignment below. Local tree clean, 55/55 tests passing, main CI green. Remaining: live E2E self-test against the deployed proxy + browser verification + Prettier pass.
 **Next Steps:**
-1. Prettier format pass on touched files, then full test suite + pre-push smoke (`npm test`, `npm run check`, `python3 scripts/validate.py`)
-2. Live E2E research call through the deployed proxy (discovery → `url_context` → citations)
-3. Commit + push via PR (ruleset requires 1 approval — first push must be a PR, not direct-to-main)
-4. Browser verification pass (Chromium + Safari/Firefox/mobile fallback) per REVIEW-CHECKLIST
+1. Live E2E research call through the deployed proxy (discovery → `url_context` → citations)
+2. Browser verification pass (Chromium + Safari/Firefox/mobile fallback) per REVIEW-CHECKLIST
+3. Prettier format pass across touched files (`npm run format`), then `npm test` / `npm run check` / `python3 scripts/validate.py`
+4. Optional: review + merge release-please PR #5 (`chore(main): release 1.0.0`) to cut v1.0.0
 
 ## 📂 Architectural Decisions
 *(Log specific choices made during the build here so future agents respect them)*
+- 2026-08-12 — **CI/ruleset alignment (PR #4):** the `main` ruleset required checks named after **workflow names** (`Repo Lint`, `Semantic PR title`, `OSV-Scanner`), but GitHub names checks after **job IDs / `name:` fields**, so those checks could never appear and every PR stayed merge-blocked. Fixes: renamed the repo-lint job to `Repo Lint` (was `validate`); renamed the semantic-pr job to `semantic-pr-title` with `name: Semantic PR title` and switched the trigger `pull_request_target` → `pull_request` (was never running); corrected the ruleset's required check `OSV-Scanner` → `osv-scanner` (case-sensitive match to the SARIF check name). Also fixed the OSV-Scanner reusable-workflow `startup_failure`: the caller must grant `actions: read` at the top level. All 9 workflows now register on `main`.
+- 2026-08-12 — **release-please auto-PR:** the merged commit triggered `release-please` → PR #5 (`chore(main): release 1.0.0`, branch `release-please--branches--main--components--zarishdocs`). Expected automation; needs an approval + merge to cut v1.0.0.
+- 2026-08-12 — **CodeQL false positives dismissed:** 3 × `js/incomplete-url-substring-sanitization` in `src/agents/research.test.js` (assertions that prompt text contains a domain, not URL-sanitization logic) dismissed as false positives via the code-scanning UI/API.
+- 2026-08-12 — **Remote `main` force-reset incident:** mid-session a second session/actor force-reset remote `main` to `1c4339c` (removing the workflow commits + a one-off `.devcontainer/` commit). Nothing was lost — PR #4 restored all workflows/docs/code. The `.devcontainer/` commit is **not** in merged history; recover from that machine's reflog only if it was wanted.
 - 2026-08-11 — **Research discovery retry + guard (review fix):** `researchIdea` retries the Flash-Lite discovery call once when it returns zero candidate URLs, then throws a retryable `AppError` instead of running the grounded call with nothing to fetch — the old path let the model answer from memory and pass self-authored citations off as verified sources. Tests added (2 new; suite now 55).
 - 2026-08-11 — **All four agents wired to `callLLM` (2026-08-11).** Each agent now exposes `build<X>Payload` (pure, tested) + `parse<X>Response` (pure, tested) + an async `<X>Operation` that calls the LLM and returns the pipeline shape. `prompts.js` holds the system prompts (grounding wording pinned per Tech Design §9.2); `util.js` holds shared merge/sanitize helpers. `callLLM` runs without an endpoint URL (works when `PROXY_ENDPOINT` is replaced later) and is fully tested.
 - 2026-08-11 — **`extractJson` semantics fixed:** it now returns a **parsed object** (or `null`), honors a ```` ```json ```` fence when present, otherwise brace-scans the whole text — so mermaid fences inside a response can't shadow the JSON (this was the bug behind "found no requirements"/"unreadable response" in tests). Callers do `const raw = extractJson(text)` and read fields directly.
@@ -35,6 +39,7 @@ DO NOT delete historical context if it is still relevant. Compress older complet
 
 ## 🐛 Known Issues & Quirks
 *(Log current bugs or weird workarounds here)*
+- **Merge blocked until 2026-08-12 — FIXED:** required checks `Repo Lint` / `Semantic PR title` never appeared (GitHub names checks after job IDs, not workflow names) and `OSV-Scanner` was a case-mismatch (`osv-scanner`). Workflow jobs renamed + ruleset context corrected; all required checks now pass on PRs.
 - **`docs/TechDesign-ZarishDocs-MVP.md`** still describes the 2.5-family/`google_search` path in places — §13 deploy steps and ALLOWED_ORIGIN are corrected (2026-08-11); the remaining model-routing prose needs a pass (mark as superseded or annotate).
 - **SETUP.md §4.5 wrong `wrangler pages deploy src` command — FIXED (2026-08-11)** in `AGENTS.md`/`SETUP.md`/`TechDesign §13`: deploy from the repo root — `wrangler pages deploy . --project-name zarishdocs --branch main --commit-dirty=true`.
 - **Placeholder guidance in `worker/wrangler.toml`/`SETUP.md`/docs — FIXED (2026-08-11):** `ALLOWED_ORIGIN` + `PROXY_ENDPOINT` carry the real live values (`zarishdocs-proxy.zarishsphere.workers.dev`, `zarishdocs.pages.dev`); stale refs in README/REPOSITORY-INVENTORY/copilot-instructions/tech_stack cleared.
