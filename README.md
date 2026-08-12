@@ -31,7 +31,7 @@ Non-technical founders who want to go from idea to a concrete, buildable plan wi
 
 **Phases 1–4 (Foundation, Core, Polish, Launch) — built and deployed.**
 
-The app is live at **<https://zarishdocs.pages.dev>** (browser-only, works offline once loaded). The research proxy is live at **<https://zarishdocs-proxy.zarishsphere.workers.dev>**. All **55 automated tests** pass. What remains is the final human pass: a browser verification check and a live end-to-end test with a real idea — see `REVIEW-CHECKLIST.md` and `MEMORY.md` for the active goal.
+The app is live at **<https://zarishdocs.pages.dev>** (browser-only, works offline once loaded). All **55 automated tests** pass. What remains is the final human pass: a browser verification check and a live end-to-end test with a real idea — see `REVIEW-CHECKLIST.md` and `MEMORY.md` for the active goal.
 
 ## Privacy and cost
 
