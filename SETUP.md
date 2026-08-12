@@ -126,8 +126,9 @@ Do **not** add `GEMINI_API_KEY` as a GitHub secret — it belongs on Cloudflare 
 5. Keep it in your password manager. This is the value you'll paste into Cloudflare in
    Section 4.3.
 
-> Free-tier grounding is 2.5-family only (2.5 Flash / Flash-Lite, 500 RPD shared). The
-> Worker already whitelists exactly those models — do not use a 3.x-only key setup.
+> The 2.5 family is retired for new accounts (404) and `google_search` grounding is
+> quota-blocked on new accounts. The app grounds research via `url_context` on the 3.5/3.6
+> models, which the Worker whitelists — any Gemini key with those models enabled works.
 
 ---
 
@@ -169,34 +170,33 @@ wrangler secret put GEMINI_API_KEY
 # paste the AIza... key from Section 3 when prompted
 wrangler deploy          # redeploy so the new secret is live
 ```
-- The deploy output prints the Worker URL, e.g. `https://zarishdocs-proxy.<your-subdomain>.workers.dev`.
-  **Copy it** — you'll need it in Section 5.
+- The deploy output prints the Worker URL, e.g. `https://zarishdocs-proxy.zarishsphere.workers.dev`.
+  It is already set as `PROXY_ENDPOINT` in `src/api.js` (Section 5) — only change it if you
+  redeploy under a different subdomain.
 - Verify the secret: `wrangler secret list` shows `GEMINI_API_KEY` (as a fingerprint, not
   the value).
 
-### 4.4 Set the `ALLOWED_ORIGIN` variable (replace the placeholder)
-`ALLOWED_ORIGIN` is a plain `[vars]` variable (not a secret) that scopes CORS. It
-currently contains the `https://your-site.pages.dev` placeholder, which would return **403
-for real browsers** — and its presence makes the docs misleading. Replace it in
-`worker/wrangler.toml`:
+### 4.4 Check the `ALLOWED_ORIGIN` variable (already set)
+`ALLOWED_ORIGIN` is a plain `[vars]` variable (not a secret) that scopes CORS. It is already
+set to the loopback origins (local dev) plus the live Pages origin — browsers on any other
+origin get a 403. It lives in `worker/wrangler.toml`:
 
-1. Open `worker/wrangler.toml`.
-2. Replace the placeholder with your real Pages origin (get it from Section 4.5, then
-   come back):
-   ```toml
-   ALLOWED_ORIGIN = "http://127.0.0.1:8080,http://localhost:8080,https://zarishdocs.pages.dev"
-   ```
-   (Keep the `localhost` entries for local dev. If you add a custom domain later, append it.)
-3. Redeploy: `cd worker && wrangler deploy`.
+```toml
+ALLOWED_ORIGIN = "http://127.0.0.1:8080,http://localhost:8080,https://zarishdocs.pages.dev"
+```
+
+Keep the `localhost` entries for local dev. If you add a custom domain later, append it
+here and redeploy: `cd worker && wrangler deploy`.
 
 ### 4.5 Create and deploy the Pages site (the app)
-The app is a static folder (`index.html`, `styles.css`, `sw.js`, `src/`). Publish it:
+The app's static files (`index.html`, `styles.css`, `sw.js`, `manifest.webmanifest`, `src/`)
+live at the repo **root** — deploy from there, not from `src/`:
 
 ```bash
 wrangler pages project create zarishdocs    # once; answer the prompts
-wrangler pages deploy src                   # from the repo root
+wrangler pages deploy . --project-name zarishdocs --branch main --commit-dirty=true   # from the repo root
 ```
-- The first `pages deploy` output ends with **`https://zarishdocs.pages.dev`** (or a
+- The `pages deploy` output ends with **`https://zarishdocs.pages.dev`** (or a
   `https://<hash>.zarishdocs.pages.dev` preview URL for non-production).
 - For a clean URL, set a **production branch** in **Cloudflare dashboard → Workers &
   Pages → zarishdocs → Settings → Builds & deployments → Production branch = `main`**, then
@@ -215,21 +215,18 @@ GEMINI_API_KEY=AIza...
 
 ---
 
-## 5. Replace the two placeholder URLs in code
+## 5. Code placeholders — already replaced
 
-Two placeholders keep the app offline. Both are documented as intentional pre-deploy
-markers (`PROXY_ENDPOINT` even has a test-safe default), so CI is unaffected — but the app
-won't work until they're real.
+Both placeholders that kept the app offline are now real values in the repo:
 
-1. **`src/api.js`** — `PROXY_ENDPOINT` (line ~12):
+1. **`src/api.js`** — `PROXY_ENDPOINT`:
    ```js
-   export const PROXY_ENDPOINT = "https://zarishdocs-proxy.<your-subdomain>.workers.dev";
+   export const PROXY_ENDPOINT = "https://zarishdocs-proxy.zarishsphere.workers.dev";
    ```
-   Use the exact Worker URL printed in Section 4.3.
+2. **`worker/wrangler.toml`** — `ALLOWED_ORIGIN` (Section 4.4).
 
-2. **`worker/wrangler.toml`** — `ALLOWED_ORIGIN` (done in Section 4.4).
-
-After both are set, commit and push; the app is live.
+Only edit these when you add a custom domain: append the origin to `ALLOWED_ORIGIN`,
+redeploy the Worker, and commit.
 
 ---
 
@@ -255,7 +252,7 @@ that is correct behavior, not a failure.
 
 ### Pre-push smoke test (everything that can run locally)
 ```bash
-npm test                     # 51 tests
+npm test                     # 55 tests
 npm run check                # node --check over src/ + worker/
 python3 scripts/validate.py  # 12 contract checks (same as repo-lint)
 ```

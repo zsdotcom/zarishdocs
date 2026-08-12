@@ -1,4 +1,5 @@
 import { DEFAULT_MODELS, callLLM, extractJson, responseText } from "../api.js";
+import { AppError } from "../errors.js";
 import { discoverySystemFor, researchSystemFor } from "./prompts.js";
 import { today, uniqueByUrl } from "./util.js";
 import sourcesConfig from "../../sources.config.json" with { type: "json" };
@@ -28,7 +29,7 @@ export function buildDiscoveryPayload(requirement) {
   return {
     model: DEFAULT_MODELS.discovery,
     systemInstruction: {
-      parts: [{ text: discoverySystemFor(requirement, preferredDomainsFor(topic)) }],
+      parts: [{ text: discoverySystemFor(preferredDomainsFor(topic)) }],
     },
     contents: [
       {
@@ -131,11 +132,27 @@ export async function researchIdea(input, options = {}) {
 
   const findings = [];
   for (const requirement of input.requirements) {
-    const discoveryResponse = await callLLM(
-      buildDiscoveryPayload(requirement),
-      options,
+    // Discovery is the less-reliable call (Flash-Lite, no tools): it can come
+    // back with zero URLs (prose instead of JSON, or every candidate filtered
+    // out). Retry once before giving up — a grounded call with nothing to fetch
+    // would just answer from memory and fabricate "verified" citations. Fail
+    // loudly rather than silently emitting ungrounded findings.
+    let candidateUrls = parseDiscoveryResponse(
+      await callLLM(buildDiscoveryPayload(requirement), options),
     );
-    const candidateUrls = parseDiscoveryResponse(discoveryResponse);
+    if (candidateUrls.length === 0) {
+      candidateUrls = parseDiscoveryResponse(
+        await callLLM(buildDiscoveryPayload(requirement), options),
+      );
+    }
+    if (candidateUrls.length === 0) {
+      throw new AppError(
+        "upstream",
+        `Could not find source URLs to research "${requirement.title}". Try again.`,
+        { retryable: true },
+      );
+    }
+
     const response = await callLLM(
       buildResearchPayload(requirement, candidateUrls),
       options,

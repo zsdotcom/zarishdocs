@@ -195,3 +195,90 @@ test("researchIdea runs discovery then grounded research per requirement", async
   assert.equal(research.findings.length, 1);
   assert.equal(research.findings[0].citations.length >= 1, true);
 });
+
+test("researchIdea retries discovery once when no URLs come back", async () => {
+  const requirement = { id: "scope", title: "Booking flow", topic: "default" };
+  const discoveryCalls = [];
+  const urlsResponse = (urls) =>
+    new Response(
+      JSON.stringify({
+        candidates: [
+          {
+            content: {
+              parts: [{ text: JSON.stringify({ urls }) }],
+            },
+          },
+        ],
+      }),
+      { status: 200 },
+    );
+
+  globalThis.fetch = async (url, init) => {
+    const body = JSON.parse(init.body);
+    if (body.model === "gemini-3.5-flash-lite") {
+      discoveryCalls.push(body);
+      return discoveryCalls.length === 1
+        ? urlsResponse([{ url: "not-a-http-url", reason: "bad" }])
+        : urlsResponse([{ url: "https://s.example.com", reason: "docs" }]);
+    }
+    return new Response(
+      JSON.stringify({
+        candidates: [
+          {
+            content: {
+              parts: [
+                {
+                  text: JSON.stringify({
+                    finding: {
+                      title: "Booking",
+                      summary: "Summary.",
+                      citations: [{ title: "S", url: "https://s.example.com", accessDate: "2026-08-11" }],
+                    },
+                  }),
+                },
+              ],
+            },
+          },
+        ],
+      }),
+      { status: 200 },
+    );
+  };
+
+  const research = await researchIdea({ requirements: [requirement] });
+  assert.equal(discoveryCalls.length, 2);
+  assert.equal(research.findings.length, 1);
+});
+
+test("researchIdea fails loudly when both discovery attempts return nothing", async () => {
+  const requirement = { id: "scope", title: "Booking flow", topic: "default" };
+  let discoveryCalls = 0;
+  globalThis.fetch = async (url, init) => {
+    const body = JSON.parse(init.body);
+    if (body.model === "gemini-3.5-flash-lite") {
+      discoveryCalls++;
+      return new Response(
+        JSON.stringify({
+          candidates: [
+            {
+              content: {
+                parts: [{ text: JSON.stringify({ urls: [] }) }],
+              },
+            },
+          ],
+        }),
+        { status: 200 },
+      );
+    }
+    throw new Error("research must not run with zero candidate URLs");
+  };
+
+  await assert.rejects(
+    () => researchIdea({ requirements: [requirement] }),
+    (error) =>
+      error.kind === "upstream" &&
+      error.retryable === true &&
+      error.message.includes("Could not find source URLs"),
+  );
+  assert.equal(discoveryCalls, 2);
+});

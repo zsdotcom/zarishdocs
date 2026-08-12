@@ -5,16 +5,16 @@ DO NOT delete historical context if it is still relevant. Compress older complet
 -->
 
 ## 🏗️ Active Phase & Goal
-**Current Task:** Live deployment of the rearchitected pipeline (2026-08-11). Worker proxy deployed at `https://zarishdocs-proxy.zarishsphere.workers.dev` with `GEMINI_API_KEY` secret; Pages site live at `https://zarishdocs.pages.dev` (deployed from repo **root**, not `src/`). Code + tests updated for the new model routing (2.5 family retired; `url_context` grounding). Remaining: doc updates, E2E self-test against the live proxy, commit + push.
+**Current Task:** Live deployment of the rearchitected pipeline (2026-08-11). Worker proxy deployed at `https://zarishdocs-proxy.zarishsphere.workers.dev` with `GEMINI_API_KEY` secret; Pages site live at `https://zarishdocs.pages.dev` (deployed from repo **root**, not `src/`). Code + tests updated for the new model routing (2.5 family retired; `url_context` grounding). Review-fix pass done: discovery retry/guard, deploy-command + placeholder doc updates, unused-param cleanup, test fixture. Remaining: E2E self-test against the live proxy, commit + push.
 **Next Steps:**
-1. Update `MEMORY.md`/`AGENTS.md`/`tech_stack.md` (in progress) + `docs/` model-routing references
-2. Prettier format pass, then full test suite + pre-push smoke (`npm test`, `npm run check`, `python3 scripts/validate.py`)
-3. Live E2E research call through the deployed proxy (discovery → `url_context` → citations)
-4. Commit + push via PR (ruleset requires 1 approval — first push must be a PR, not direct-to-main)
-5. Browser verification pass (Chromium + Safari/Firefox/mobile fallback) per REVIEW-CHECKLIST
+1. Prettier format pass on touched files, then full test suite + pre-push smoke (`npm test`, `npm run check`, `python3 scripts/validate.py`)
+2. Live E2E research call through the deployed proxy (discovery → `url_context` → citations)
+3. Commit + push via PR (ruleset requires 1 approval — first push must be a PR, not direct-to-main)
+4. Browser verification pass (Chromium + Safari/Firefox/mobile fallback) per REVIEW-CHECKLIST
 
 ## 📂 Architectural Decisions
 *(Log specific choices made during the build here so future agents respect them)*
+- 2026-08-11 — **Research discovery retry + guard (review fix):** `researchIdea` retries the Flash-Lite discovery call once when it returns zero candidate URLs, then throws a retryable `AppError` instead of running the grounded call with nothing to fetch — the old path let the model answer from memory and pass self-authored citations off as verified sources. Tests added (2 new; suite now 55).
 - 2026-08-11 — **All four agents wired to `callLLM` (2026-08-11).** Each agent now exposes `build<X>Payload` (pure, tested) + `parse<X>Response` (pure, tested) + an async `<X>Operation` that calls the LLM and returns the pipeline shape. `prompts.js` holds the system prompts (grounding wording pinned per Tech Design §9.2); `util.js` holds shared merge/sanitize helpers. `callLLM` runs without an endpoint URL (works when `PROXY_ENDPOINT` is replaced later) and is fully tested.
 - 2026-08-11 — **`extractJson` semantics fixed:** it now returns a **parsed object** (or `null`), honors a ```` ```json ```` fence when present, otherwise brace-scans the whole text — so mermaid fences inside a response can't shadow the JSON (this was the bug behind "found no requirements"/"unreadable response" in tests). Callers do `const raw = extractJson(text)` and read fields directly.
 - 2026-08-11 — **Native file writes (ADR-003 revised):** dropped `browser-fs-access`. `src/file-writer.js` uses the File System Access API (`showDirectoryPicker`) on Chromium desktop and an `<a download>` fallback everywhere else — no dependency, same UX contract (surfaced on first load, never a silent failure).
@@ -35,9 +35,9 @@ DO NOT delete historical context if it is still relevant. Compress older complet
 
 ## 🐛 Known Issues & Quirks
 *(Log current bugs or weird workarounds here)*
-- **`docs/TechDesign-*.md` + `README.md` + `REPOSITORY-INVENTORY.md` still describe the 2.5-family/`google_search` path** — corrected in `AGENTS.md`/`tech_stack.md`/`MEMORY.md`; the older design/research docs need a pass before they mislead (mark as superseded or annotate).
-- **`SETUP.md` §4.5 says `wrangler pages deploy src` — WRONG.** Deploy from the repo root: `wrangler pages deploy . --project-name zarishdocs --branch main --commit-dirty=true`.
-- **`worker/wrangler.toml` + `SETUP.md` still carry the `https://your-site.pages.dev` placeholder guidance** — the real origin (`https://zarishdocs.pages.dev`) is already deployed; update the docs so a future redeploy doesn't revert it.
+- **`docs/TechDesign-ZarishDocs-MVP.md`** still describes the 2.5-family/`google_search` path in places — §13 deploy steps and ALLOWED_ORIGIN are corrected (2026-08-11); the remaining model-routing prose needs a pass (mark as superseded or annotate).
+- **SETUP.md §4.5 wrong `wrangler pages deploy src` command — FIXED (2026-08-11)** in `AGENTS.md`/`SETUP.md`/`TechDesign §13`: deploy from the repo root — `wrangler pages deploy . --project-name zarishdocs --branch main --commit-dirty=true`.
+- **Placeholder guidance in `worker/wrangler.toml`/`SETUP.md`/docs — FIXED (2026-08-11):** `ALLOWED_ORIGIN` + `PROXY_ENDPOINT` carry the real live values (`zarishdocs-proxy.zarishsphere.workers.dev`, `zarishdocs.pages.dev`); stale refs in README/REPOSITORY-INVENTORY/copilot-instructions/tech_stack cleared.
 - **Prettier formatting is NOT yet applied across the codebase** — installed and wired, but no `prettier --write` pass has run yet.
 - **Privacy caveat:** Gemini free tier may use prompts/responses to improve Google products ("used to improve our products: Yes"). The app is privacy-first locally, but this must be disclosed to users who bring their own key.
 - Grounding-quota vs generation-quota are separate buckets in Google; a client misconfiguration can miscount grounded calls against the wrong (smaller) bucket → the Worker proxy must set the tool-use path correctly and log which quota a response consumed, or rate-limit errors will be mysterious 429s (ADR-001 caveat).

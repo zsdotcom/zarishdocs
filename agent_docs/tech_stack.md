@@ -31,7 +31,7 @@ main = "index.js"
 compatibility_date = "2026-08-01"
 
 [vars]
-ALLOWED_ORIGIN = "http://127.0.0.1:8080,http://localhost:8080,https://your-site.pages.dev"
+ALLOWED_ORIGIN = "http://127.0.0.1:8080,http://localhost:8080,https://zarishdocs.pages.dev"
 ```
 Fetch handler: reject non-POST → validate Origin (403 for unknown) → answer `OPTIONS` preflight with scoped `Access-Control-Allow-Origin` + `Vary: Origin` → whitelist the model string (SSRF guard) → inject `env.GEMINI_API_KEY` → forward to `generativelanguage.googleapis.com` → re-emit response with CORS headers, stamping `x-zarish-quota-bucket: grounding|generation` on every response so quota accounting is testable. One Gemini call = one subrequest (well under the 50/request limit); keep CPU under the 10ms free-tier budget (a passthrough is fine). See `worker/index.test.js` for the 8 behavior tests.
 

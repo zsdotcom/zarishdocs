@@ -126,7 +126,7 @@ zarishdocs/
 | --- | ---: | ---: | --- |
 | `index.js` | 4,450 B | 122 | Stateless proxy: Origin validation, POST-only, model whitelist (SSRF guard), `GEMINI_API_KEY` injection, `x-zarish-quota-bucket` stamp |
 | `index.test.js` | 3,685 B | 90 | 8 tests: 403 origin, OPTIONS preflight, method guard, model whitelist, quota buckets, 429 re-emit, invalid JSON |
-| `wrangler.toml` | 545 B | 12 | Worker config; `ALLOWED_ORIGIN` = localhost + Pages placeholder |
+| `wrangler.toml` | 545 B | 12 | Worker config; `ALLOWED_ORIGIN` = loopback origins + live Pages origin |
 
 ### `agent_docs/` — Agent detail docs (loaded on demand)
 
@@ -167,4 +167,4 @@ zarishdocs/
 
 - **Only server-side runtime surface:** `worker/index.js` (stateless; never grow into an app server).
 - **Zero runtime dependencies**; the only dependency is `prettier` (dev), pinned via committed `pnpm-lock.yaml`.
-- **Deployment gaps (documented in `AGENTS.md`/`MEMORY.md`):** `src/api.js` `PROXY_ENDPOINT` is a placeholder; `worker/wrangler.toml` `ALLOWED_ORIGIN` contains `https://your-site.pages.dev`; no browser verification pass has run yet.
+- **Deployed:** Worker proxy live at `https://zarishdocs-proxy.zarishsphere.workers.dev` (`GEMINI_API_KEY` secret set); Pages app live at `https://zarishdocs.pages.dev` (deployed from the repo root). `PROXY_ENDPOINT` (`src/api.js`) and `ALLOWED_ORIGIN` (`worker/wrangler.toml`) hold the real values. Still open: browser verification pass per `REVIEW-CHECKLIST.md` and the live E2E self-test.

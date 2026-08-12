@@ -6,7 +6,7 @@ main = "index.js"
 compatibility_date = "2026-08-01"
 
 [vars]
-# Scoped CORS. Replace the placeholder with your real Cloudflare Pages origin
-# before deploy. For the sandbox environment, localhost is permitted in the
-# browser-only local-dev flow.
+# Scoped CORS: loopback origins (local dev) + the live Pages origin. If you add
+# a custom domain, append it here and redeploy the Worker, or browsers on that
+# origin get a 403.
 ALLOWED_ORIGIN = "http://127.0.0.1:8080,http://localhost:8080,https://zarishdocs.pages.dev"

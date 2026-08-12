@@ -12,18 +12,18 @@ ZarishDocs is a browser-only, zero-cost AI research lab. A user types a plain-la
 
 ## Current state
 
-**Phases 1–3: code complete, not yet deployed.** Working: static app shell (`index.html`, `styles.css`) with offline Service Worker + manifest (`sw.js`, `manifest.webmanifest`, `icon.svg`); all four agents wired to real Gemini through `callLLM` (`src/agents/{profiler,research,architect,writer}.js` + shared `prompts.js`/`util.js`); `src/api.js` (model routing + `callLLM` + error classification); the Worker proxy (`worker/index.js` + `wrangler.toml`, 8 tests); IndexedDB (`src/db.js`) and native file writing (`src/file-writer.js`); `sources.config.json`; `package.json` with **51 passing tests** and Prettier wired.
+**Phases 1–4: built and deployed.** Working: static app shell (`index.html`, `styles.css`) with offline Service Worker + manifest (`sw.js`, `manifest.webmanifest`, `icon.svg`); all four agents wired to real Gemini through `callLLM` (`src/agents/{profiler,research,architect,writer}.js` + shared `prompts.js`/`util.js`); `src/api.js` (model routing + `callLLM` + error classification); the Worker proxy (`worker/index.js` + `wrangler.toml`, 8 tests); IndexedDB (`src/db.js`) and native file writing (`src/file-writer.js`); `sources.config.json`; `package.json` with **55 passing tests** and Prettier wired.
 
-**Not yet live:** `src/api.js` `getProxyEndpoint()` still points at a placeholder URL and `worker/wrangler.toml` `ALLOWED_ORIGIN` still has the Pages placeholder — nothing is deployed, `GEMINI_API_KEY` is unset, and no browser verification pass has run. Check `MEMORY.md` for the active goal before starting work.
+**Deployed:** the Worker proxy is live at `https://zarishdocs-proxy.zarishsphere.workers.dev` with the `GEMINI_API_KEY` secret set, and the Pages app is live at `https://zarishdocs.pages.dev` (deployed from the repo **root**, not `src/`). `PROXY_ENDPOINT` (`src/api.js`) and `ALLOWED_ORIGIN` (`worker/wrangler.toml`) hold the real values. Still open: the browser verification pass per `REVIEW-CHECKLIST.md` and the live E2E self-test. Check `MEMORY.md` for the active goal before starting work.
 
 ## Commands
 
 - **Dev server:** no build step — `npm run serve` (or `dev`) serves the folder at `127.0.0.1:8080`. Loopback-only bind: LAN/mobile testing needs a plain `python3 -m http.server 8080` instead.
-- **Testing:** Node's built-in runner — `npm test` → `node --test "src/**/*.test.js" "worker/**/*.test.js"` (Node ≥ 22; needs `npm`, which may not be on PATH here — run `node --test "src/**/*.test.js" "worker/**/*.test.js"` directly). Currently 51 tests pass across the agents, `api.js`, and the Worker proxy. Add tests for new pure logic as it lands.
+- **Testing:** Node's built-in runner — `npm test` → `node --test "src/**/*.test.js" "worker/**/*.test.js"` (Node ≥ 22; needs `npm`, which may not be on PATH here — run `node --test "src/**/*.test.js" "worker/**/*.test.js"` directly). Currently 55 tests pass across the agents, `api.js`, and the Worker proxy. Add tests for new pure logic as it lands.
 - **Syntax check:** `npm run check` → `node --check` over the shipped `src/` modules, `worker/`, and `sw.js`.
 - **Formatting:** Prettier (devDep, Tech Design §12) — `npm run format` (write) / `npm run format:check`. Run before finishing a change set; do not reformat files you didn't touch.
-- **Worker deploy (from `worker/`):** `wrangler secret put GEMINI_API_KEY`, then `wrangler deploy`. App: `wrangler pages deploy src`.
-- **Worker gotcha:** `worker/wrangler.toml` `ALLOWED_ORIGIN` is a comma-separated list that currently includes `localhost:8080` (local dev) plus the `https://your-site.pages.dev` placeholder. The placeholder must be replaced with the real Pages origin before any deploy, or production browsers get a 403.
+- **Worker deploy (from `worker/`):** `wrangler secret put GEMINI_API_KEY`, then `wrangler deploy`. App: `wrangler pages deploy . --project-name zarishdocs --branch main --commit-dirty=true` from the repo **root** — `index.html`/`styles.css`/`sw.js`/`manifest.webmanifest` live there, not in `src/`.
+- **Worker gotcha:** `worker/wrangler.toml` `ALLOWED_ORIGIN` is a comma-separated list that includes the loopback/localhost origins (local dev) plus `https://zarishdocs.pages.dev`. If you add a custom domain, append it to the list and redeploy the Worker, or production browsers on that origin get a 403.
 - **Repo hygiene:** zero **runtime** dependencies — do not `npm install` runtime deps or commit new lockfiles. Prettier is the one allowed devDep; `pnpm-lock.yaml` is committed to pin it (gitignore override). Machine-local files (`.vscode/`, `.mcp.json`) are gitignored; never commit or edit them.
 
 ## Architecture (non-obvious)
@@ -52,10 +52,10 @@ ZarishDocs is a browser-only, zero-cost AI research lab. A user types a plain-la
 
 ## Roadmap
 
-- **Phase 1 — Foundation:** static app shell (done) · SW + IndexedDB shell (done) · deploy Worker proxy + secret (pending) · `sources.config.json` (done) · tooling pinned (test runner done; Prettier installed — format pass pending).
-- **Phase 2 — Core (PRD P0):** wire agents to real Gemini via the proxy (grounded research) (code done, tests done) · F1 One-Click Local Folder Access (code done) · F2 Vibe Translator (Profiler) (code done) · F3 Live Web Scanner (Research, grounded) (code done) · F4 Auto-Writer (Architect + Writer, Mermaid `.mmd` docs) (code done) — all pending live E2E once the endpoint is real.
+- **Phase 1 — Foundation:** static app shell (done) · SW + IndexedDB shell (done) · deploy Worker proxy + secret (done) · `sources.config.json` (done) · tooling pinned (test runner done; Prettier installed).
+- **Phase 2 — Core (PRD P0):** wire agents to real Gemini via the proxy (grounded research) (code done, tests done) · F1 One-Click Local Folder Access (code done) · F2 Vibe Translator (Profiler) (code done) · F3 Live Web Scanner (Research, grounded) (code done) · F4 Auto-Writer (Architect + Writer, Mermaid `.mmd` docs) (code done) — deployed; live E2E self-test pending.
 - **Phase 3 — Polish:** error handling (research failure, unsupported browser, 429 messaging) (code done, per-app messaging pending live check) · mobile/Safari fallback UX (code done, pending manual verification) · perf + a11y pass (sub-100KB shell; lazy-load the 23MB embedding model) (pending) · nice-to-haves (theme toggle, glossary tooltips) (pending).
-- **Phase 4 — Launch:** security pass · deploy to Pages + Worker · end-to-end self-test with a real idea · launch checklist.
+- **Phase 4 — Launch:** security pass · deploy to Pages + Worker (done) · end-to-end self-test with a real idea (pending) · launch checklist.
 
 ## Context files (progressive disclosure — load on demand)
 
