@@ -4,7 +4,7 @@
 // Never intercept cross-origin requests (Gemini proxy, CDNs).
 // Bump CACHE_V whenever the shell changes.
 
-const CACHE_V = "2026-08-11a";
+const CACHE_V = "2026-08-12a";
 const SHELL_CACHE = `shell-${CACHE_V}`;
 const RUNTIME_CACHE = `runtime-${CACHE_V}`;
 
