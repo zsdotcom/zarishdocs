@@ -6,10 +6,7 @@
 import { AppError, messageForKind } from "./errors.js";
 
 export function isSupported() {
-  return (
-    typeof window !== "undefined" &&
-    typeof window.showDirectoryPicker === "function"
-  );
+  return typeof window !== "undefined" && typeof window.showDirectoryPicker === "function";
 }
 
 export async function pickFolder() {

@@ -1,8 +1,7 @@
 // Prompt templates (Tech Design §9). Plain data, versioned here so tests can
 // assert the grounding/domain-bias instructions are present.
 
-const JSON_ONLY =
-  "Return strict JSON only, with no prose before or after the object.";
+const JSON_ONLY = "Return strict JSON only, with no prose before or after the object.";
 
 export const PROFILER_SYSTEM = `
 You translate a plain-language app idea into a structured research brief for a

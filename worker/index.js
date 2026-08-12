@@ -14,11 +14,7 @@ const GEMINI_API = "https://generativelanguage.googleapis.com/v1beta";
 // and google_search grounding is quota-blocked on new accounts. The free path
 // today is url_context grounding on the current 3.x models. Whitelisting the
 // model string also closes the SSRF/abuse vector of forwarding arbitrary names.
-const ALLOWED_MODELS = new Set([
-  "gemini-3.5-flash",
-  "gemini-3.5-flash-lite",
-  "gemini-3.6-flash",
-]);
+const ALLOWED_MODELS = new Set(["gemini-3.5-flash", "gemini-3.5-flash-lite", "gemini-3.6-flash"]);
 
 const CORS_HEADERS = (origin) => ({
   "Access-Control-Allow-Origin": origin,
@@ -72,32 +68,28 @@ export default {
 
     const model = payload?.model;
     if (!model || !ALLOWED_MODELS.has(model)) {
-      return json(
-        { error: { message: `Model not allowed: ${model ?? "(missing)"}` } },
-        400,
-      );
+      return json({ error: { message: `Model not allowed: ${model ?? "(missing)"}` } }, 400);
     }
 
     // Which quota bucket is this call consuming? Grounding (google_search or
     // url_context tools) and plain generation are tracked separately by
     // Google, and a misconfiguration can miscount grounded calls against the
     // wrong bucket (ADR-001). Surface a hint so this is visible in testing.
-    const isGrounded = Array.isArray(payload.tools) && payload.tools.some(
-      (t) => t && (typeof t.google_search === "object" || typeof t.url_context === "object"),
-    );
+    const isGrounded =
+      Array.isArray(payload.tools) &&
+      payload.tools.some(
+        (t) => t && (typeof t.google_search === "object" || typeof t.url_context === "object"),
+      );
     const quotaBucket = isGrounded ? "grounding" : "generation";
 
-    const upstream = await fetch(
-      `${GEMINI_API}/models/${model}:generateContent`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-goog-api-key": env.GEMINI_API_KEY,
-        },
-        body: JSON.stringify(payload),
+    const upstream = await fetch(`${GEMINI_API}/models/${model}:generateContent`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-goog-api-key": env.GEMINI_API_KEY,
       },
-    );
+      body: JSON.stringify(payload),
+    });
 
     // Re-emit the Gemini response with scoped CORS. Buffering is fine here —
     // responses are small JSON. If Gemini errored, surface a user-safe message

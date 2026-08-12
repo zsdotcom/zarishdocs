@@ -98,9 +98,7 @@ export function extractJson(text) {
 }
 
 export function responseText(response) {
-  return (response?.candidates?.[0]?.content?.parts || [])
-    .map((part) => part.text || "")
-    .join("");
+  return (response?.candidates?.[0]?.content?.parts || []).map((part) => part.text || "").join("");
 }
 
 export function normalizeIdea(ideaText) {

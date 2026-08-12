@@ -5,20 +5,27 @@ export function today() {
 }
 
 export function slugify(text) {
-  return String(text || "")
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "")
-    .slice(0, 40) || "idea";
+  return (
+    String(text || "")
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "")
+      .slice(0, 40) || "idea"
+  );
 }
 
 // Extract ```mermaid ... ``` fenced blocks from markdown as {name, content}.
 export function extractMermaid(markdown) {
   const blocks = String(markdown || "").match(/```mermaid\s*\n([\s\S]*?)```/g) || [];
   return blocks.map((block, index) => {
-    const content = block.replace(/```mermaid\s*\n?/, "").replace(/```$/, "").trim();
+    const content = block
+      .replace(/```mermaid\s*\n?/, "")
+      .replace(/```$/, "")
+      .trim();
     const firstLine = content.split("\n").find((line) => line.trim()) || "";
-    const name = slugify(firstLine.replace(/^flowchart\s+\w+\s*/, "").trim() || `diagram-${index + 1}`);
+    const name = slugify(
+      firstLine.replace(/^flowchart\s+\w+\s*/, "").trim() || `diagram-${index + 1}`,
+    );
     return { name, content };
   });
 }
