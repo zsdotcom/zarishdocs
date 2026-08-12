@@ -1,7 +1,12 @@
 import { profileIdea } from "./agents/profiler.js";
 import { researchIdea } from "./agents/research.js";
 import { architectDocument } from "./agents/architect.js";
-import { writeDocuments, renderResearchMarkdown, documentFilenames, diagramFilenames } from "./agents/writer.js";
+import {
+  writeDocuments,
+  renderResearchMarkdown,
+  documentFilenames,
+  diagramFilenames,
+} from "./agents/writer.js";
 import { classifyFetchError } from "./errors.js";
 import { isSupported, saveFiles } from "./file-writer.js";
 import { incrementSessionCount, persistStorage, saveProject, saveSession } from "./db.js";
@@ -158,11 +163,13 @@ async function persistResult(idea) {
 }
 
 function slugFromState() {
-  return String(state.profile?.summary || "zarishdocs-app")
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "")
-    .slice(0, 40) || "zarishdocs-app";
+  return (
+    String(state.profile?.summary || "zarishdocs-app")
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "")
+      .slice(0, 40) || "zarishdocs-app"
+  );
 }
 
 function escapeHtml(text) {

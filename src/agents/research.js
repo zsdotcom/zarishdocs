@@ -95,9 +95,7 @@ export function rankCitations(citations, preferredDomains) {
   if (!preferredDomains?.length) return citations;
   const score = (citation) =>
     preferredDomains.some((domain) => citation.url.includes(domain)) ? 0 : 1;
-  return [...citations].sort(
-    (a, b) => score(a) - score(b) || a.url.localeCompare(b.url),
-  );
+  return [...citations].sort((a, b) => score(a) - score(b) || a.url.localeCompare(b.url));
 }
 
 export function parseResearchResponse(response, requirement) {
@@ -119,9 +117,7 @@ export function parseResearchResponse(response, requirement) {
   return {
     requirementId: requirement.id,
     title: json?.finding?.title || requirement.title,
-    summary:
-      json?.finding?.summary ||
-      `Research finding for ${requirement.title}.`,
+    summary: json?.finding?.summary || `Research finding for ${requirement.title}.`,
     citations,
   };
 }
@@ -153,10 +149,7 @@ export async function researchIdea(input, options = {}) {
       );
     }
 
-    const response = await callLLM(
-      buildResearchPayload(requirement, candidateUrls),
-      options,
-    );
+    const response = await callLLM(buildResearchPayload(requirement, candidateUrls), options);
     findings.push(parseResearchResponse(response, requirement));
   }
 
