@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.1](https://github.com/zsdotcom/zarishdocs/compare/v1.0.0...v1.0.1) (2026-08-12)
+
+
+### Bug Fixes
+
+* root wrangler.toml so Cloudflare Workers Builds deploys the proxy ([9cd7c3a](https://github.com/zsdotcom/zarishdocs/commit/9cd7c3ae369ed387f6977d6eaa66892e59646696))
+
 ## 1.0.0 (2026-08-12)
 
 
