@@ -5,11 +5,10 @@ DO NOT delete historical context if it is still relevant. Compress older complet
 -->
 
 ## 🏗️ Active Phase & Goal
-**Current Task:** Pipeline hardening is verified live (2026-08-12). Live E2E passed through the deployed proxy (research produced a real grounded GitHub Docs citation); Prettier applied to app source (PR #7 → `09d4bc1`); headless-Chrome smoke test passed (shell renders, zero console errors, SW registered + controlling, offline reload served from SW cache). Local tree clean on `main`, 55/55 tests passing, main CI green. Remaining is the user's call: release-please PR #5, plus manual browser verification on Safari/Firefox/mobile.
+**Current Task:** Pipeline hardening is verified live (2026-08-12). Live E2E passed through the deployed proxy (research produced a real grounded GitHub Docs citation); Prettier applied to app source (PR #7 → `09d4bc1`); headless-Chrome smoke test passed (shell renders, zero console errors, SW registered + controlling, offline reload served from SW cache). Releases cut: **v1.0.0** (PR #5 → `8318396`) and **v1.0.1** (PR #10 → `15beb6a`). Cloudflare **Workers Builds now green** (root `wrangler.toml`, PR #9 → `9cd7c3a`). Remote is a single `main` branch, zero open PRs, 55/55 tests passing. Only remaining: manual browser verification on Safari/Firefox/mobile.
 **Next Steps:**
-1. Optional: review + merge release-please PR #5 (`chore(main): release 1.0.0`) to cut v1.0.0
-2. Manual browser verification on Safari/Firefox/mobile (download fallback + per-app messaging) per REVIEW-CHECKLIST — cannot be automated in this environment
-3. Optional later: Prettier over remaining files (6 test files + pnpm-lock.yaml) — currently excluded deliberately to avoid re-tripping the dismissed CodeQL alerts
+1. Manual browser verification on Safari/Firefox/mobile (download fallback + per-app messaging) per REVIEW-CHECKLIST — cannot be automated in this environment
+2. Optional later: Prettier over remaining files (6 test files + pnpm-lock.yaml) — currently excluded deliberately to avoid re-tripping the dismissed CodeQL alerts
 
 ## 📂 Architectural Decisions
 *(Log specific choices made during the build here so future agents respect them)*
