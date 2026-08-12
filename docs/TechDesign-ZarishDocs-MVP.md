@@ -329,9 +329,9 @@ Each feature is one service module + one UI wiring step, built and verified in o
 
 ## 13. Deployment Plan
 
-1. In `worker/wrangler.toml`, set `ALLOWED_ORIGIN` to the real Pages origin (e.g. `https://your-site.pages.dev`).
+1. In `worker/wrangler.toml`, `ALLOWED_ORIGIN` is already set to the live Pages origin (`https://zarishdocs.pages.dev`); only append new custom domains here.
 2. From `worker/`: `wrangler secret put GEMINI_API_KEY` → `wrangler deploy`.
-3. Build the app (Phase 2), then from repo root: `wrangler pages deploy src`.
+3. Deploy the app from the repo **root** (the static files live there, not in `src/`): `wrangler pages deploy . --project-name zarishdocs --branch main --commit-dirty=true`.
 4. Smoke test: browser → idea in → docs out; check the proxy returns `x-zarish-quota-bucket` on responses (grounding vs generation).
 5. Verify quota accounting: two clocks matter — Cloudflare resets midnight UTC (100k req/day, shared with Pages Functions), Gemini resets midnight Pacific.
 

@@ -6,7 +6,7 @@ A browser-only, zero-cost AI research lab. You type a plain-language app idea, a
 
 ## Status
 
-**Phases 1–3 (Foundation + Core + Polish) — code complete, not yet deployed.** Static shell with offline Service Worker, all four agents wired to real Gemini via `callLLM` (grounded research), IndexedDB + native file writes, and a 51-test suite (agents + `api.js` + Worker proxy) all pass. Not live yet: the Worker proxy isn't deployed, `getProxyEndpoint()` is still a placeholder, and no browser verification has run. See `AGENTS.md` → Roadmap and the active goal in `MEMORY.md`.
+**Phases 1–4 (Foundation + Core + Polish + Launch) — built and deployed.** Static shell with offline Service Worker, all four agents wired to real Gemini via `callLLM` (grounded research), IndexedDB + native file writes, and a 55-test suite (agents + `api.js` + Worker proxy) all pass. Live: Worker proxy at `https://zarishdocs-proxy.zarishsphere.workers.dev` and the Pages app at `https://zarishdocs.pages.dev`. Remaining: the browser verification pass per `REVIEW-CHECKLIST.md` and the live E2E self-test. See `AGENTS.md` → Roadmap and the active goal in `MEMORY.md`.
 
 ## Repository Structure
 
@@ -33,10 +33,10 @@ zarishdocs/
 │   ├── db.js                  # IndexedDB stores (ideas, drafts, settings)
 │   ├── file-writer.js         # Native FS API writes + <a download> fallback (ADR-003)
 │   └── agents/                # Service modules + shared prompts.js / util.js
-│       ├── profiler.js        #   F2 Vibe Translator (2.5 Flash-Lite, ungrounded)
-│       ├── research.js        #   F3 Live Web Scanner (2.5 Flash, google_search grounding)
-│       ├── architect.js       #   F4 outline builder (2.5 Flash)
-│       ├── writer.js          #   F4 doc writer, emits Mermaid .mmd (2.5 Flash)
+│       ├── profiler.js        #   F2 Vibe Translator (3.5 Flash-Lite, ungrounded)
+│       ├── research.js        #   F3 Live Web Scanner (3.6 Flash, url_context grounding)
+│       ├── architect.js       #   F4 outline builder (3.5 Flash)
+│       ├── writer.js          #   F4 doc writer, emits Mermaid .mmd (3.6 Flash)
 │       ├── prompts.js         # System prompts (grounding wording pinned, TD §9.2)
 │       └── util.js            # Shared helpers (merge findings, sanitize filenames)
 ├── sw.js                      # Service Worker: offline shell + runtime cache
@@ -53,7 +53,7 @@ zarishdocs/
 ## Setup & Commands
 
 - **App:** none required — vanilla JS/HTML/CSS, no build step, no framework. Serve the folder with any static server (`npm run serve` → loopback-only `python3 -m http.server 8080 --bind 127.0.0.1`; plain `python3 -m http.server 8080` for LAN/mobile) and reload after changes. Offline-first: the Service Worker precaches the shell.
-- **LLM proxy** (from `worker/`): `wrangler secret put GEMINI_API_KEY`, then `wrangler deploy`. Set the real Pages origin in `ALLOWED_ORIGIN` (`worker/wrangler.toml`) and swap the placeholder in `getProxyEndpoint()` (`src/api.js`) before going live.
+- **LLM proxy** (from `worker/`): already deployed — after a Worker change, `wrangler secret put GEMINI_API_KEY` (once) then `wrangler deploy`. `ALLOWED_ORIGIN` (`worker/wrangler.toml`) and `PROXY_ENDPOINT` (`src/api.js`) hold the real live values; only edit them to add a custom domain (then redeploy the Worker).
 - **Hosting:** Cloudflare Pages (app) + Cloudflare Workers (proxy) — both free tier, $0.
 - **Testing:** `npm test` → `node --test "src/**/*.test.js" "worker/**/*.test.js"` (Node ≥ 22). `npm run check` for a `node --check` syntax pass. `npm run format` / `format:check` (Prettier).
 
@@ -61,4 +61,4 @@ zarishdocs/
 
 - The generated product documents follow the ZarishDocs workflow (research → PRD → Tech Design); each ends with a machine-readable `Handoff Context` block that feeds the next stage — preserve it when editing.
 - Mermaid architecture diagrams ship as `.mmd` files alongside the docs (no in-app rendering), so they work in any Markdown viewer.
-- **Model-routing correction (Aug 11, 2026):** free Google-Search grounding lives on the Gemini 2.5 family (2.5 Flash / Flash-Lite), not Gemini 3.x — 3.x grounding is paid-only. Details in `agent_docs/tech_stack.md`.
+- **Model routing (Aug 11, 2026):** the 2.5 family is retired for new accounts (404) and `google_search` grounding is quota-blocked on new accounts. Live path: two-step research — 3.5 Flash-Lite URL discovery (no grounding) → 3.6 Flash `url_context` grounding for real citations. Details in `agent_docs/tech_stack.md`.

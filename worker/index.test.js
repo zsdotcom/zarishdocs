@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import worker from "./index.js";
 
 const ENV = {
-  ALLOWED_ORIGIN: "http://localhost:8080,https://your-site.pages.dev",
+  ALLOWED_ORIGIN: "http://localhost:8080,https://zarishdocs.pages.dev",
   GEMINI_API_KEY: "test-secret",
 };
 

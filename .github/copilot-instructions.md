@@ -5,7 +5,7 @@ Implementation details live in `agent_docs/` and in the top-level design docs un
 
 ## Repository shape and current status
 
-ZarishDocs is a browser-only, zero-cost AI research lab. The repository contains the static UI shell (with offline Service Worker + manifest), the Worker proxy scaffold, the source-of-truth research/config docs, and source files under `src/`. All four agents are wired to `callLLM` and covered by tests; the remaining gap is deployment (`getProxyEndpoint()` is still a placeholder, `ALLOWED_ORIGIN` needs the real Pages origin, and no browser verification has run).
+ZarishDocs is a browser-only, zero-cost AI research lab. The repository contains the static UI shell (with offline Service Worker + manifest), the Worker proxy, the source-of-truth research/config docs, and source files under `src/`. All four agents are wired to `callLLM` and covered by tests. The app is deployed: Worker proxy at `https://zarishdocs-proxy.zarishsphere.workers.dev` (`GEMINI_API_KEY` secret) and Pages app at `https://zarishdocs.pages.dev` (deployed from the repo root). `PROXY_ENDPOINT` and `ALLOWED_ORIGIN` hold the real values. Still open: browser verification pass per `REVIEW-CHECKLIST.md`.
 
 Important files to check before making changes:
 - `AGENTS.md` — current project state, commands, constraints, roadmap, and architectural guardrails.
@@ -60,7 +60,7 @@ Do not change the following without explicit approval or direction from the desi
 - Keep secrets out of source control; `GEMINI_API_KEY` must stay in Worker secrets or in session-only browser storage for the optional BYO-key mode.
 - Do not introduce new dependencies or frameworks unless the stack decision in `agent_docs/tech_stack.md` explicitly permits them.
 - Do not grow the Worker into an application server; keep it as a stateless proxy boundary.
-- Preserve the model routing correction in the docs: `profiler` -> Gemini 2.5 Flash-Lite, `research` -> Gemini 2.5 Flash, `architect` / `writer` -> Gemini 2.5 Flash.
+- Preserve the model routing in `agent_docs/tech_stack.md` (source of truth): the 2.5 family is retired; `profiler`/`discovery` -> 3.5 Flash-Lite (ungrounded), `research`/`writer` -> 3.6 Flash (`url_context` grounding), `architect` -> 3.5 Flash.
 - Respect the output-artifact and generated-doc conventions described in `agent_docs/code_patterns.md` and `docs/TechDesign-ZarishDocs-MVP.md`.
 
 ## Testing and verification expectations

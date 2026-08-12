@@ -44,7 +44,7 @@ Return this shape: {"finding": {"title": string, "summary": string, "citations":
 // F3 (Live Web Scanner), step 1 — discover candidate source URLs. Runs BEFORE
 // the grounded call: url_context can only fetch URLs present in the prompt, so
 // the model proposes the candidates, the research step grounds against them.
-export function discoverySystemFor(requirement, preferredDomains) {
+export function discoverySystemFor(preferredDomains) {
   const bias = preferredDomains.length
     ? `Prefer URLs on official domains: ${preferredDomains.join(", ")}.`
     : "Prefer authoritative official documentation.";
