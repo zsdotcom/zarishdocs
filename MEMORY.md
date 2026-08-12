@@ -5,15 +5,17 @@ DO NOT delete historical context if it is still relevant. Compress older complet
 -->
 
 ## 🏗️ Active Phase & Goal
-**Current Task:** Post-merge hardening of the rearchitected pipeline (2026-08-12). Everything from the review-fix pass is committed and merged to `main` (`2e24b6c`, PR #4): discovery retry/guard, deploy-command + placeholder doc updates, unused-param cleanup, test fixture, plus the CI/ruleset alignment below. Local tree clean, 55/55 tests passing, main CI green. Remaining: live E2E self-test against the deployed proxy + browser verification + Prettier pass.
+**Current Task:** Pipeline hardening is verified live (2026-08-12). Live E2E passed through the deployed proxy (research produced a real grounded GitHub Docs citation); Prettier applied to app source (PR #7 → `09d4bc1`); headless-Chrome smoke test passed (shell renders, zero console errors, SW registered + controlling, offline reload served from SW cache). Local tree clean on `main`, 55/55 tests passing, main CI green. Remaining is the user's call: release-please PR #5, plus manual browser verification on Safari/Firefox/mobile.
 **Next Steps:**
-1. Live E2E research call through the deployed proxy (discovery → `url_context` → citations)
-2. Browser verification pass (Chromium + Safari/Firefox/mobile fallback) per REVIEW-CHECKLIST
-3. Prettier format pass across touched files (`npm run format`), then `npm test` / `npm run check` / `python3 scripts/validate.py`
-4. Optional: review + merge release-please PR #5 (`chore(main): release 1.0.0`) to cut v1.0.0
+1. Optional: review + merge release-please PR #5 (`chore(main): release 1.0.0`) to cut v1.0.0
+2. Manual browser verification on Safari/Firefox/mobile (download fallback + per-app messaging) per REVIEW-CHECKLIST — cannot be automated in this environment
+3. Optional later: Prettier over remaining files (6 test files + pnpm-lock.yaml) — currently excluded deliberately to avoid re-tripping the dismissed CodeQL alerts
 
 ## 📂 Architectural Decisions
 *(Log specific choices made during the build here so future agents respect them)*
+- 2026-08-12 — **Live E2E verified (first real grounded run):** `/tmp/opencode/e2e-research.mjs` drove the real pipeline through the deployed proxy — Flash-Lite discovery then 3.6-Flash `url_context` grounding → returned 1 real cited source (GitHub Docs "Reuse workflows", `https://docs.github.com/.../reusing-workflows`, accessed 2026-08-12, ~18s). Confirms the rearchitected two-step research path end-to-end.
+- 2026-08-12 — **Prettier applied to app source only (PR #7 → `09d4bc1`):** formatted `index.html` + `src/*` non-test modules + `worker/index.js` (8 files, 52+/58−, formatting-only). **Excluded deliberately:** the 6 test files (reformatting would re-land the dismissed `js/incomplete-url-substring-sanitization` CodeQL alerts on new lines → CI fails again) and `pnpm-lock.yaml` (churn). CodeQL passed on PR #7 — the exclusion worked.
+- 2026-08-12 — **Headless browser smoke test passed (Chrome 151):** served at 127.0.0.1:8080 + CDP — shell renders all key elements, `statusTitle: Idle`, zero console errors/exceptions, SW registered AND controlling, and an offline reload (server killed) served the cached shell intact. Earlier "SyntaxError / undefined" results were a bug in the probe script (`\n` inside a template literal), not the app.
 - 2026-08-12 — **CI/ruleset alignment (PR #4):** the `main` ruleset required checks named after **workflow names** (`Repo Lint`, `Semantic PR title`, `OSV-Scanner`), but GitHub names checks after **job IDs / `name:` fields**, so those checks could never appear and every PR stayed merge-blocked. Fixes: renamed the repo-lint job to `Repo Lint` (was `validate`); renamed the semantic-pr job to `semantic-pr-title` with `name: Semantic PR title` and switched the trigger `pull_request_target` → `pull_request` (was never running); corrected the ruleset's required check `OSV-Scanner` → `osv-scanner` (case-sensitive match to the SARIF check name). Also fixed the OSV-Scanner reusable-workflow `startup_failure`: the caller must grant `actions: read` at the top level. All 9 workflows now register on `main`.
 - 2026-08-12 — **release-please auto-PR:** the merged commit triggered `release-please` → PR #5 (`chore(main): release 1.0.0`, branch `release-please--branches--main--components--zarishdocs`). Expected automation; needs an approval + merge to cut v1.0.0.
 - 2026-08-12 — **CodeQL false positives dismissed:** 3 × `js/incomplete-url-substring-sanitization` in `src/agents/research.test.js` (assertions that prompt text contains a domain, not URL-sanitization logic) dismissed as false positives via the code-scanning UI/API.
@@ -43,7 +45,7 @@ DO NOT delete historical context if it is still relevant. Compress older complet
 - **`docs/TechDesign-ZarishDocs-MVP.md`** still describes the 2.5-family/`google_search` path in places — §13 deploy steps and ALLOWED_ORIGIN are corrected (2026-08-11); the remaining model-routing prose needs a pass (mark as superseded or annotate).
 - **SETUP.md §4.5 wrong `wrangler pages deploy src` command — FIXED (2026-08-11)** in `AGENTS.md`/`SETUP.md`/`TechDesign §13`: deploy from the repo root — `wrangler pages deploy . --project-name zarishdocs --branch main --commit-dirty=true`.
 - **Placeholder guidance in `worker/wrangler.toml`/`SETUP.md`/docs — FIXED (2026-08-11):** `ALLOWED_ORIGIN` + `PROXY_ENDPOINT` carry the real live values (`zarishdocs-proxy.zarishsphere.workers.dev`, `zarishdocs.pages.dev`); stale refs in README/REPOSITORY-INVENTORY/copilot-instructions/tech_stack cleared.
-- **Prettier formatting is NOT yet applied across the codebase** — installed and wired, but no `prettier --write` pass has run yet.
+- **Prettier applied to app source (2026-08-12, PR #7); 6 test files + `pnpm-lock.yaml` remain** — excluded deliberately: formatting the test files would re-land the dismissed CodeQL alerts (`js/incomplete-url-substring-sanitization` in `research.test.js` style assertions) on new lines and fail CI. Revisit only if the alerts get resolved at the pattern level.
 - **Privacy caveat:** Gemini free tier may use prompts/responses to improve Google products ("used to improve our products: Yes"). The app is privacy-first locally, but this must be disclosed to users who bring their own key.
 - Grounding-quota vs generation-quota are separate buckets in Google; a client misconfiguration can miscount grounded calls against the wrong (smaller) bucket → the Worker proxy must set the tool-use path correctly and log which quota a response consumed, or rate-limit errors will be mysterious 429s (ADR-001 caveat).
 - Cloudflare Worker free quota (100k requests/day) is shared with Pages Functions; resets midnight UTC, while Gemini quota resets midnight Pacific — two different clocks to message around.
@@ -60,5 +62,5 @@ DO NOT delete historical context if it is still relevant. Compress older complet
 - [x] Model-routing rearchitect (2.5 retired → 3.5/3.6 `url_context`; code + tests + Worker whitelist)
 - [~] One-Click Local Folder Access (code ready — native FS API + `<a download>` fallback; browser verification pending)
 - [~] Vibe Translator (Profiler Agent) — code ready, tested; live E2E pending
-- [~] Live Web Scanner (Research Agent) — code ready, tested; live E2E pending
+- [x] Live Web Scanner (Research Agent) — live E2E passed 2026-08-12 (real grounded GitHub Docs citation via proxy)
 - [~] Auto-Writer (Architect & Writer Agents) — code ready, tested; live E2E pending
