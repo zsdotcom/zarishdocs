@@ -6,7 +6,8 @@ on:
     branches: [main]
 
 jobs:
-  Repo Lint:
+  repo-lint:
+    name: Repo Lint
     runs-on: ubuntu-latest
     permissions:
       contents: read
